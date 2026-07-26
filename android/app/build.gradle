@@ -1,0 +1,109 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader("UTF-8") { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = System.getenv("ABTIN_VERSION_CODE") ?: localProperties.getProperty("flutter.versionCode")
+if (flutterVersionCode == null) {
+    flutterVersionCode = "1"
+}
+
+def flutterVersionName = localProperties.getProperty("flutter.versionName")
+if (flutterVersionName == null) {
+    flutterVersionName = "1.0"
+}
+
+// ===== signingConfig پایدار برای ریلیز =====
+// چرا این بخش لازم بود: هر بار در CI (گیت‌هاب اکشن) که signingConfig مشخص نشود،
+// Flutter از کلید debug استفاده می‌کند. کلید debug روی هر runner گیت‌هاب یک بار به
+// صورت تصادفی و از نو ساخته می‌شود (چون هر اجرا روی یک ماشین مجازی تازه است)، پس
+// امضای هر APK با نسخه‌ی قبلی فرق می‌کند و اندروید اجازه‌ی «آپدیت روی نسخه‌ی قبلی»
+// را نمی‌دهد و کاربر مجبور است اول اپ قبلی را Uninstall کند.
+// راه‌حل: یک کیستور ثابت بسازید (به README مراجعه کنید) و اطلاعاتش را از طریق
+// متغیرهای محیطی (در CI) یا فایل local key.properties (برای توسعه‌ی محلی) بدهید.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file("key.properties")
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withReader("UTF-8") { reader -> keystoreProps.load(reader) }
+}
+
+def envOrProp = { String envName, String propName ->
+    def fromEnv = System.getenv(envName)
+    if (fromEnv != null && fromEnv.trim().length() > 0) return fromEnv
+    return keystoreProps.getProperty(propName)
+}
+
+def releaseStoreFilePath = envOrProp("ABTIN_KEYSTORE_PATH", "storeFile")
+def releaseStorePassword = envOrProp("ABTIN_KEYSTORE_PASSWORD", "storePassword")
+def releaseKeyAlias = envOrProp("ABTIN_KEY_ALIAS", "keyAlias")
+def releaseKeyPassword = envOrProp("ABTIN_KEY_PASSWORD", "keyPassword")
+def hasReleaseSigning = releaseStoreFilePath != null && file(releaseStoreFilePath).exists()
+
+android {
+    namespace "ir.abtin.abtin_navigator"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion "28.1.13356709" // maplibre_gl requires this; higher NDKs are backward compatible
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+    }
+
+    defaultConfig {
+        // این applicationId شناسه‌ی یکتای اپ روی گوگل‌پلی است؛ در صورت نیاز تغییرش دهید.
+        applicationId "ir.abtin.abtin_navigator"
+        minSdk Math.max(flutter.minSdkVersion, 21)
+        targetSdk flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFilePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // اگر کیستور ریلیز تنظیم شده باشد از همان استفاده می‌شود (امضای ثابت،
+            // آپدیت درست روی نسخه‌ی نصب‌شده)؛ در غیر این‌صورت برای راحتی توسعه‌ی
+            // محلی موقتاً از کلید debug استفاده می‌شود (فقط برای dev، نه انتشار).
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    packagingOptions {
+        pickFirst "lib/**/libc++_shared.so"
+        pickFirst "lib/**/libjsc.so"
+    }
+}
+
+flutter {
+    source "../.."
+}
+
+dependencies {
+}
