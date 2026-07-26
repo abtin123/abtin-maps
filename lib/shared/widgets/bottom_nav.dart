@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/voice_settings/presentation/tts_providers.dart';
 
-enum NavKey { routes, search, home, voice, settings }
+enum NavKey { settings, voice, home, saved, search }
 
 class BottomNav extends ConsumerStatefulWidget {
   final NavKey currentPage;
@@ -22,19 +22,18 @@ class BottomNav extends ConsumerStatefulWidget {
 }
 
 class _BottomNavState extends ConsumerState<BottomNav> {
-
   static const List<NavKey> _defaultOrder = [
-    NavKey.routes,
-    NavKey.search,
-    NavKey.home,
-    NavKey.voice,
     NavKey.settings,
+    NavKey.voice,
+    NavKey.home,
+    NavKey.saved,
+    NavKey.search,
   ];
   static const int _centerSlot = 2;
 
   static const double _barHeight = 96;
   static const double _horizontalMargin = 7;
-  
+
   List<NavKey> _buildOrder(NavKey current) {
     final order = List<NavKey>.from(_defaultOrder);
     if (current != NavKey.home) {
@@ -50,16 +49,31 @@ class _BottomNavState extends ConsumerState<BottomNav> {
 
   IconData _iconFor(NavKey key, bool ttEnabled) {
     switch (key) {
-      case NavKey.routes:
-        return Icons.alt_route_rounded;
-      case NavKey.search:
-        return Icons.search_rounded;
-      case NavKey.home:
-        return Icons.home_rounded;
-      case NavKey.voice:
-        return ttEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded;
       case NavKey.settings:
         return Icons.settings_rounded;
+      case NavKey.voice:
+        return ttEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded;
+      case NavKey.home:
+        return Icons.home_rounded;
+      case NavKey.saved:
+        return Icons.star_rounded;
+      case NavKey.search:
+        return Icons.search_rounded;
+    }
+  }
+
+  String _labelFor(NavKey key) {
+    switch (key) {
+      case NavKey.settings:
+        return 'تنظیمات';
+      case NavKey.voice:
+        return 'صدا';
+      case NavKey.home:
+        return 'خانه';
+      case NavKey.saved:
+        return 'علاقه‌مندی‌ها';
+      case NavKey.search:
+        return 'جستجو';
     }
   }
 
@@ -77,8 +91,8 @@ class _BottomNavState extends ConsumerState<BottomNav> {
       case NavKey.home:
         context.go('/');
         break;
-      case NavKey.routes:
-        context.push('/routes');
+      case NavKey.saved:
+        context.push('/saved-places');
         break;
       case NavKey.search:
         context.push('/search');
@@ -105,40 +119,33 @@ class _BottomNavState extends ConsumerState<BottomNav> {
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
           children: [
+            // Main Background with Deeper Curve
             Positioned(
               left: -MediaQuery.of(context).size.width * 0.25,
               right: -MediaQuery.of(context).size.width * 0.25,
-              bottom: bottomSafe - 3,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.elliptical(600, 60),
-                  topRight: Radius.elliptical(600, 60),
-                ),
+              bottom: bottomSafe - 10, // Lowered slightly
+              child: ClipPath(
+                clipper: _BottomBarClipper(),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
-                    height: 60,
+                    height: 80, // Increased height for deeper curve
                     decoration: BoxDecoration(
-                      color: AppColors.subGlassBgSoft,
+                      color: AppColors.subGlassBgSoft.withOpacity(0.8),
                       border: const Border(
-                        top: BorderSide(color: Color(0x472FE6C4), width: 1),
+                        top: BorderSide(color: Color(0x472FE6C4), width: 1.5),
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x80000000),
-                          blurRadius: 24,
-                          offset: Offset(0, -8),
-                        ),
-                      ],
                     ),
                   ),
                 ),
               ),
             ),
+
+            // Inner Glass Bar
             Positioned(
               left: _horizontalMargin + 30,
               right: _horizontalMargin + 30,
-              bottom: bottomSafe + 20,
+              bottom: bottomSafe + 16,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
                 child: BackdropFilter(
@@ -149,22 +156,17 @@ class _BottomNavState extends ConsumerState<BottomNav> {
                       borderRadius: BorderRadius.circular(28),
                       color: AppColors.subGlassBg,
                       border: Border.all(color: AppColors.subGlassBorder, width: 1),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x8C000000),
-                          blurRadius: 18,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
                     ),
                   ),
                 ),
               ),
             ),
+
+            // Navigation Items
             Positioned(
               left: _horizontalMargin + 30,
               right: _horizontalMargin + 30,
-              bottom: bottomSafe + 14,
+              bottom: bottomSafe + 10,
               child: Directionality(
                 textDirection: TextDirection.ltr,
                 child: Row(
@@ -178,38 +180,45 @@ class _BottomNavState extends ConsumerState<BottomNav> {
                       behavior: HitTestBehavior.opaque,
                       child: SizedBox(
                         width: 55,
-                        height: 68,
+                        height: 75,
                         child: Center(
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            width: isActive ? 50 : 44,
-                            height: isActive ? 50 : 44,
+                            width: isActive ? 52 : 44,
+                            height: isActive ? 52 : 44,
                             transform: isActive
-                                ? (Matrix4.identity()..translate(0.0, -10.0))
+                                ? (Matrix4.identity()..translate(0.0, -12.0))
                                 : Matrix4.identity(),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: isActive ? AppColors.subAccentGradient : null,
                               color: isActive ? null : Colors.transparent,
                               border: isActive
-                                  ? Border.all(color: const Color(0xFF0E1219), width: 4)
+                                  ? Border.all(color: const Color(0xFF0E1219), width: 2) // Reduced stroke
                                   : null,
-                              boxShadow: isActive
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.subAccentB,
-                                        blurRadius: 16,
-                                        spreadRadius: 1,
-                                      )
-                                    ]
-                                  : null,
+                              // Removed Glow Shadow as requested
                             ),
-                            child: Icon(
-                              _iconFor(key, ttEnabled),
-                              size: isActive ? 28 : 26,
-                              color: isMuted
-                                  ? AppColors.homeDanger
-                                  : (isActive ? Colors.white : const Color(0xFFC7CCD1)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _iconFor(key, ttEnabled),
+                                  size: isActive ? 26 : 22,
+                                  color: isMuted
+                                      ? AppColors.homeDanger
+                                      : (isActive ? Colors.white : const Color(0xFFC7CCD1)),
+                                ),
+                                if (!isActive) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _labelFor(key),
+                                    style: TextStyle(
+                                      color: isMuted ? AppColors.homeDanger : const Color(0xFFC7CCD1),
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),
@@ -224,4 +233,20 @@ class _BottomNavState extends ConsumerState<BottomNav> {
       ),
     );
   }
+}
+
+class _BottomBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, 30);
+    path.quadraticBezierTo(size.width / 2, -20, size.width, 30); // Deeper curve
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }

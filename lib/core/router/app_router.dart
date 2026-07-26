@@ -6,6 +6,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/voice_settings/presentation/voice_settings_screen.dart';
 import '../../features/saved_places/presentation/saved_places_screen.dart';
 import '../../features/offline_maps/presentation/map_settings_screen.dart';
+import '../../features/auth/presentation/profile_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -25,6 +26,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/map-settings',
       builder: (context, state) => const MapSettingsScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );
