@@ -1,0 +1,40 @@
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+*.g.dart
+
+# --- Android ---
+android/.gradle/
+android/local.properties
+android/**/gradle-wrapper.jar
+android/captures/
+android/gradlew.bak
+
+# --- iOS ---
+ios/Flutter/.last_build_id
+ios/Pods/
+ios/.symlinks/
+
+# --- Signing secrets: NEVER commit these ---
+# کیستور امضای ریلیز و فایل رمزهایش — اگر این‌ها وارد Git شوند (حتی در یک
+# ریپوی خصوصی)، هر کسی که در هر زمانی به تاریخچه‌ی ریپو دسترسی پیدا کند
+# می‌تواند نسخه‌ای جعلی از اپ را با همون امضا منتشر کند؛ و چون کلید ریلیز
+# گوگل‌پلی بعد از اولین انتشار قابل تعویض نیست، نشت این فایل عملاً غیرقابل
+# جبران است. برای CI از متغیرهای محیطی (ABTIN_KEYSTORE_* که در
+# android/app/build.gradle خوانده می‌شوند) استفاده کن، نه commit کردن فایل.
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+*.jks
+*.keystore
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+*.iml
+.DS_Store

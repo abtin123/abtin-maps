@@ -1,0 +1,12 @@
+# این فایل نمونه است — برای استفاده‌ی واقعی، آن را کپی کن به:
+#   android/key.properties
+# (بدون .example) و مقدارهای واقعی را جایگزین کن.
+#
+# android/key.properties هرگز نباید وارد Git شود — در .gitignore
+# ریشه‌ی پروژه از قبل exclude شده. build.gradle این فایل را خودکار
+# می‌خواند (به شرطی که کنار همین فایل، یعنی داخل پوشه‌ی android/، باشد).
+
+storeFile=app/upload-keystore.jks
+storePassword=CHANGE_ME
+keyAlias=CHANGE_ME
+keyPassword=CHANGE_ME
