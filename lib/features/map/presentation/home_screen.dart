@@ -405,11 +405,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final voice = ref.read(ttsServiceProvider)
         ..setVolume(ref.read(ttsVolumeProvider))
         ..setPlaybackRate(ref.read(ttsRateProvider));
-      voice.playSequence(VoicePackFa.forManeuver(
-        type: first.type,
-        modifier: first.modifier,
-        exit: first.exit,
-      ));
+      
+      if (ref.read(ttsEngineProvider) == VoiceEngine.tts) {
+        voice.speak(first.text);
+      } else {
+        voice.playSequence(VoicePackFa.forManeuver(
+          type: first.type,
+          modifier: first.modifier,
+          exit: first.exit,
+        ));
+      }
     }
 
     setState(() => _cameraFollowsVehicle = true);
@@ -494,10 +499,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final voice = ref.read(ttsServiceProvider)
         ..setVolume(ref.read(ttsVolumeProvider))
         ..setPlaybackRate(ref.read(ttsRateProvider));
-      // بدون await عمداً: نباید صدای «از مسیر خارج شدید» جلوی محاسبه‌ی
-      // مسیر جدید (که خودش چند صدم ثانیه تا چند ثانیه طول می‌کشد) را
-      // بگیرد؛ هر دو به‌صورت موازی پیش می‌روند.
-      voice.playSequence(VoicePackFa.offRoute(deviationMeters));
+      
+      if (ref.read(ttsEngineProvider) == VoiceEngine.tts) {
+        voice.speak('از مسیر خارج شدید؛ در حال محاسبه‌ی مسیر جدید');
+      } else {
+        voice.playSequence(VoicePackFa.offRoute(deviationMeters));
+      }
     }
 
     try {
@@ -526,16 +533,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final voice = ref.read(ttsServiceProvider)
           ..setVolume(ref.read(ttsVolumeProvider))
           ..setPlaybackRate(ref.read(ttsRateProvider));
-        // «مسیر محاسبه شد» قبل از دستورالعملِ اولِ مسیر تازه، تا کاربر
-        // بفهمد این یک مسیر جدید است نه ادامه‌ی همان قبلی.
-        voice.playSequence([
-          'route_calculate.ogg',
-          ...VoicePackFa.forManeuver(
-            type: first.type,
-            modifier: first.modifier,
-            exit: first.exit,
-          ),
-        ]);
+        
+        if (ref.read(ttsEngineProvider) == VoiceEngine.tts) {
+          voice.speak('مسیر جدید محاسبه شد. ${first.text}');
+        } else {
+          voice.playSequence([
+            'route_calculate.ogg',
+            ...VoicePackFa.forManeuver(
+              type: first.type,
+              modifier: first.modifier,
+              exit: first.exit,
+            ),
+          ]);
+        }
       }
     } finally {
       _isRerouting = false;
@@ -666,12 +676,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final voice = ref.read(ttsServiceProvider)
           ..setVolume(ref.read(ttsVolumeProvider))
           ..setPlaybackRate(ref.read(ttsRateProvider));
-        voice.playSequence(VoicePackFa.forManeuver(
-          type: instr.type,
-          modifier: instr.modifier,
-          exit: instr.exit,
-          distanceMeters: distToNext,
-        ));
+        
+        if (ref.read(ttsEngineProvider) == VoiceEngine.tts) {
+          voice.speak(instr.text);
+        } else {
+          voice.playSequence(VoicePackFa.forManeuver(
+            type: instr.type,
+            modifier: instr.modifier,
+            exit: instr.exit,
+            distanceMeters: distToNext,
+          ));
+        }
       }
     }
 
@@ -747,7 +762,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       colors: const [Color(0xFF3DDC84), Color(0xFF10D15C)],
     );
     if (ref.read(ttEnabledProvider)) {
-      ref.read(ttsServiceProvider).playSequence(VoicePackFa.arrived);
+      final voice = ref.read(ttsServiceProvider);
+      if (ref.read(ttsEngineProvider) == VoiceEngine.tts) {
+        voice.speak('شما به مقصد رسیدید');
+      } else {
+        voice.playSequence(VoicePackFa.arrived);
+      }
     }
 
     Future.delayed(const Duration(seconds: 3), () {

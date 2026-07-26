@@ -54,6 +54,36 @@ final ttsVolumeProvider = StateNotifierProvider<_DoubleSettingNotifier, double>(
   );
 });
 
+final ttsEngineProvider = StateNotifierProvider<TtsEngineNotifier, VoiceEngine>((ref) {
+  return TtsEngineNotifier(
+    ref.watch(settingsRepositoryProvider),
+    ref.watch(ttsServiceProvider),
+  );
+});
+
+class TtsEngineNotifier extends StateNotifier<VoiceEngine> {
+  final SettingsRepository repo;
+  final VoiceService service;
+  static const key = 'voice_engine';
+
+  TtsEngineNotifier(this.repo, this.service) : super(VoiceEngine.assets) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final v = await repo.getValue(key);
+    final engine = v == 'tts' ? VoiceEngine.tts : VoiceEngine.assets;
+    service.setEngine(engine);
+    state = engine;
+  }
+
+  Future<void> set(VoiceEngine engine) async {
+    state = engine;
+    service.setEngine(engine);
+    await repo.setValue(key, engine == VoiceEngine.tts ? 'tts' : 'assets');
+  }
+}
+
 class _DoubleSettingNotifier extends StateNotifier<double> {
   final SettingsRepository repo;
   final String key;

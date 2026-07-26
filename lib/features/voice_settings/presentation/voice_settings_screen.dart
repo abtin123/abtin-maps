@@ -5,6 +5,7 @@ import '../../../shared/widgets/bottom_nav.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../../../shared/widgets/page_header.dart';
 import '../data/voice_pack_fa.dart';
+import '../data/voice_service.dart';
 import 'tts_providers.dart';
 
 class VoiceSettingsScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,7 @@ class _VoiceSettingsScreenState extends ConsumerState<VoiceSettingsScreen> {
     final gender = ref.watch(ttsGenderProvider);
     final volume = ref.watch(ttsVolumeProvider);
     final rate = ref.watch(ttsRateProvider);
+    final engine = ref.watch(ttsEngineProvider);
     final ratePosition = ((rate - 0.5) / 1.0).clamp(0.0, 1.0);
 
     return Scaffold(
@@ -57,19 +59,39 @@ class _VoiceSettingsScreenState extends ConsumerState<VoiceSettingsScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+                      const Text('نوع موتور صوتی', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      _OptionRow(
+                        title: 'فایل‌های ضبط شده',
+                        subtitle: 'صدای طبیعی و آفلاین (بدون اعلام نام خیابان)',
+                        selected: engine == VoiceEngine.assets,
+                        onTap: () {
+                          ref.read(ttsEngineProvider.notifier).set(VoiceEngine.assets);
+                        },
+                      ),
+                      _OptionRow(
+                        title: 'موتور هوشمند (TTS)',
+                        subtitle: 'تولید صدای داینامیک (پشتیبانی از نام خیابان)',
+                        selected: engine == VoiceEngine.tts,
+                        onTap: () {
+                          ref.read(ttsEngineProvider.notifier).set(VoiceEngine.tts);
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('انتخاب گوینده', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
                       _OptionRow(
                         title: 'صدای زن',
-                        subtitle: 'پکِ صوتیِ فارسی — ضبط‌شده، آفلاین',
+                        subtitle: 'پکِ صوتیِ فارسی',
                         selected: gender == VoiceGender.female,
                         onTap: () {
                           ref.read(ttsGenderProvider.notifier).set(VoiceGender.female);
                         },
                       ),
-                      const SizedBox(height: 10),
                       _OptionRow(
                         title: 'صدای مرد',
-                        subtitle: 'پکِ صوتیِ فارسی — ضبط‌شده، آفلاین',
+                        subtitle: 'پکِ صوتیِ فارسی',
                         selected: gender == VoiceGender.male,
                         onTap: () {
                           ref.read(ttsGenderProvider.notifier).set(VoiceGender.male);
@@ -101,21 +123,25 @@ class _VoiceSettingsScreenState extends ConsumerState<VoiceSettingsScreen> {
                         onTap: () async {
                           voiceService.setVolume(volume);
                           voiceService.setPlaybackRate(rate);
-                          await voiceService.playSequence(VoicePackFa.forManeuver(
-                            type: 'turn',
-                            modifier: 'right',
-                            distanceMeters: 200,
-                          ));
+                          if (engine == VoiceEngine.tts) {
+                            await voiceService.speak('دویست متر جلوتر به سمت راست بپیچید و وارد خیابان آزادی شوید');
+                          } else {
+                            await voiceService.playSequence(VoicePackFa.forManeuver(
+                              type: 'turn',
+                              modifier: 'right',
+                              distanceMeters: 200,
+                            ));
+                          }
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('تنظیمات صوتی', style: TextStyle(color: Colors.white, fontSize: 15)),
+                      const Text('تنظیمات پیشرفته', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       _SwitchRow(
                         label: 'اعلام نام خیابان‌ها',
-                        desc: 'در پکِ صوتیِ فعلی پشتیبانی نمی‌شود (نیازمند TTS واقعی)',
-                        value: false,
-                        onChanged: null,
+                        desc: engine == VoiceEngine.assets ? 'فقط در حالت TTS فعال می‌شود' : 'اعلام دقیق نام معابر و خیابان‌ها',
+                        value: engine == VoiceEngine.tts && streetNames,
+                        onChanged: engine == VoiceEngine.tts ? (v) => setState(() => streetNames = v) : null,
                       ),
                       _SwitchRow(
                         label: 'هشدار صوتی دوربین و رادار',
@@ -306,7 +332,7 @@ class _TestVoiceButtonState extends State<_TestVoiceButton> {
       onTap: () async {
         setState(() => playing = true);
         widget.onTap();
-        await Future.delayed(const Duration(milliseconds: 2000));
+        await Future.delayed(const Duration(milliseconds: 2500));
         if (mounted) setState(() => playing = false);
       },
       child: Container(
