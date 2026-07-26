@@ -103,8 +103,8 @@ class LocationService {
   double? _refLat;
   double? _refLng;
 
-  final _xFilter = _Kalman1D(processNoisePerSecond: 8.0);
-  final _yFilter = _Kalman1D(processNoisePerSecond: 8.0);
+  final _xFilter = _Kalman1D(processNoisePerSecond: 12.0);
+  final _yFilter = _Kalman1D(processNoisePerSecond: 12.0);
   final _speedFilter = _Kalman1D(processNoisePerSecond: 0.8, minMeasurementAccuracy: 2.0);
 
   double? _smoothHeading;
@@ -113,7 +113,7 @@ class LocationService {
   // Time-constant based smoothing (instead of a flat per-fix alpha) so the
   // heading catches up to a real turn within a fixed amount of *time*
   // regardless of how often fixes happen to arrive.
-  static const double _headingTimeConstantSec = 0.5;
+  static const double _headingTimeConstantSec = 0.2;
   static const double _headingFreezeSpeedKmh = 2.0;
 
   Stream<VehiclePosition> get stream => _controller.stream;

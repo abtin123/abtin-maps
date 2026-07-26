@@ -1,3 +1,16 @@
+buildscript {
+    ext.kotlin_version = '1.7.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -5,14 +18,45 @@ allprojects {
     }
 }
 
-rootProject.buildDir = "../build"
-
+rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
-    project.evaluationDependsOn(":app")
+    project.evaluationDependsOn(':app')
 }
+
+subprojects {
+    project.configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'com.android.support'
+                    && !details.requested.name.contains('multidex')) {
+                details.useVersion "27.1.1"
+            }
+        }
+    }
+    
+    if (project.name != "app") {
+        project.gradle.projectsEvaluated {
+            if (project.hasProperty('android')) {
+                project.android {
+                    compileSdkVersion 35
+                    buildToolsVersion "35.0.0"
+                    defaultConfig {
+                        targetSdkVersion 35
+                    }
+                }
+            }
+        }
+    }
+}
+
+allprojects {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir

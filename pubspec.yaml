@@ -12,7 +12,7 @@ dependencies:
 
   # --- Map engine (Native, GPU-accelerated, vector tiles, 3D) ---
   # آپدیت شده به نسخه‌ی جدیدتر برای سازگاری با Flutter 3.x
-  maplibre_gl: ^0.26.2
+  maplibre_gl: ^0.22.0
 
   # --- State management / DI ---
   flutter_riverpod: ^2.5.1
@@ -33,8 +33,7 @@ dependencies:
   # --- شتاب‌سنج گوشی (برای اتصال واقعی سرعت‌سنج به سنسور فیزیکی و فیوژن با GPS) ---
   sensors_plus: ^6.1.1
 
-  # --- Deep Linking (اپ‌های دیگر مثل اسنپ بتوانند مسیریابی را صدا بزنند) ---
-  app_links: ^6.1.1
+
 
   # --- HTTP Client (برای درخواست‌های API مسیریابی) ---
   http: ^1.2.0

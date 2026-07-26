@@ -8,8 +8,8 @@ class VehicleMarker extends StatefulWidget {
   final MapLibreMapController? mapController;
   final LatLng position;
   final double headingDeg;
+  final double accuracyM;
   final VehicleType vehicle;
-
   final bool followsCamera;
 
   const VehicleMarker({
@@ -17,6 +17,7 @@ class VehicleMarker extends StatefulWidget {
     required this.mapController,
     required this.position,
     required this.headingDeg,
+    required this.accuracyM,
     required this.vehicle,
     this.followsCamera = false,
   });
@@ -27,35 +28,21 @@ class VehicleMarker extends StatefulWidget {
 
 class _VehicleMarkerState extends State<VehicleMarker> {
   Point<num>? _screen;
-
   double _rotationTurns = 0;
+  double _pixelsPerMeter = 0;
 
   @override
   void initState() {
     super.initState();
     _rotationTurns = widget.headingDeg / 360.0;
-    _syncFollowMode();
+    _updateLocation();
   }
 
   @override
   void didUpdateWidget(covariant VehicleMarker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.followsCamera != oldWidget.followsCamera) {
-      _syncFollowMode();
-    } else if (!widget.followsCamera) {
-      _updateScreenLocation();
-    }
-    if (!widget.followsCamera) {
-      _advanceRotation(widget.headingDeg);
-    }
-  }
-
-  void _syncFollowMode() {
-    if (widget.followsCamera) {
-      _rotationTurns = _rotationTurns.roundToDouble();
-      return;
-    }
-    _updateScreenLocation();
+    _advanceRotation(widget.headingDeg);
+    _updateLocation();
   }
 
   void _advanceRotation(double newHeadingDeg) {
@@ -66,56 +53,81 @@ class _VehicleMarkerState extends State<VehicleMarker> {
     _rotationTurns += delta;
   }
 
-  Future<void> _updateScreenLocation() async {
+  Future<void> _updateLocation() async {
     final controller = widget.mapController;
     if (controller == null) return;
     try {
       final s = await controller.toScreenLocation(widget.position);
+      
+      // Calculate pixels per meter for the accuracy circle
+      // We take a point 100m away to get a stable scale
+      const double testDistM = 100.0;
+      final double latOffset = testDistM / 111320.0;
+      final testPos = LatLng(widget.position.latitude + latOffset, widget.position.longitude);
+      final s2 = await controller.toScreenLocation(testPos);
+      
       if (!mounted) return;
-      final x = s.x.toDouble();
-      final y = s.y.toDouble();
-      if (x.isFinite && y.isFinite) {
-        setState(() => _screen = s);
-      }
-    } catch (_) {
-    }
+      
+      final double dx = (s.x - s2.x).toDouble();
+      final double dy = (s.y - s2.y).toDouble();
+      final double distPx = sqrt(dx * dx + dy * dy);
+      
+      setState(() {
+        _screen = s;
+        _pixelsPerMeter = distPx / testDistM;
+      });
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    const markerSize = 52.0;
-    final screenSize = MediaQuery.of(context).size;
+    final s = _screen;
+    if (s == null) return const SizedBox.shrink();
 
-    double left;
-    double top;
-    if (widget.followsCamera) {
-      left = screenSize.width / 2 - markerSize / 2;
-      top = screenSize.height / 2 - markerSize / 2;
-    } else {
-      final s = _screen;
-      left = s != null
-          ? s.x.toDouble() - markerSize / 2
-          : screenSize.width / 2 - markerSize / 2;
-      top = s != null
-          ? s.y.toDouble() - markerSize / 2
-          : screenSize.height / 2 - markerSize / 2;
-    }
+    const markerSize = 52.0;
+    final accuracyRadiusPx = widget.accuracyM * _pixelsPerMeter;
+
     return Positioned(
-      left: left,
-      top: top,
+      left: s.x.toDouble() - max(markerSize / 2, accuracyRadiusPx),
+      top: s.y.toDouble() - max(markerSize / 2, accuracyRadiusPx),
       child: IgnorePointer(
-        child: AnimatedRotation(
-          turns: _rotationTurns,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-          child: widget.vehicle == VehicleType.arrow
-              ? Image.asset(
-                  'assets/images/nav_arrow.png',
-                  width: markerSize,
-                  height: markerSize,
-                  fit: BoxFit.contain,
-                )
-              : const _CarIcon(),
+        child: SizedBox(
+          width: max(markerSize, accuracyRadiusPx * 2),
+          height: max(markerSize, accuracyRadiusPx * 2),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Accuracy Circle
+              if (widget.accuracyM > 0)
+                Container(
+                  width: accuracyRadiusPx * 2,
+                  height: accuracyRadiusPx * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.blue.withOpacity(0.15),
+                    border: Border.all(
+                      color: Colors.blue.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+              
+              // Vehicle Arrow/Icon
+              AnimatedRotation(
+                turns: _rotationTurns,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.linear,
+                child: widget.vehicle == VehicleType.arrow
+                    ? Image.asset(
+                        'assets/images/nav_arrow.png',
+                        width: markerSize,
+                        height: markerSize,
+                        fit: BoxFit.contain,
+                      )
+                    : const _CarIcon(),
+              ),
+            ],
+          ),
         ),
       ),
     );

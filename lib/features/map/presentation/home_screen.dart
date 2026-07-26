@@ -244,6 +244,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mapController: _mapController,
                 position: markerPos,
                 headingDeg: pos?.headingDeg ?? 0,
+                accuracyM: pos?.accuracyM ?? 0,
                 vehicle: selectedVehicle,
                 followsCamera: _cameraFollowsVehicle,
               );
