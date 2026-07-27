@@ -55,7 +55,7 @@ dependencies:
   # شکست می‌خورد. نسخه‌ی ۱۲ همان API جدید (`SharePlus.instance.share` +
   # `ShareParams`) را دارد، پس بدون نیاز به تغییر کد فقط ورژن پایین آمد.
   share_plus: ^12.0.2
-  resumable_downloader: ^0.1.0
+  resumable_downloader: ^0.0.38
   archive: ^3.5.1
 
   model_viewer_plus: ^1.8.0
