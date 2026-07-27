@@ -1,0 +1,57 @@
+{
+  "version": 8,
+  "name": "Abtin Day",
+  "metadata": {
+    "manus:description": "Magic Earth inspired day style for Abtin Navigator"
+  },
+  "sources": {
+    "openfreemap": {
+      "type": "vector",
+      "url": "https://tiles.openfreemap.org/tiles.json"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#f8f4f0"
+      }
+    },
+    {
+      "id": "landuse_park",
+      "type": "fill",
+      "source": "openfreemap",
+      "source-layer": "landuse",
+      "filter": ["==", "class", "park"],
+      "paint": {
+        "fill-color": "#c8e6c9"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "openfreemap",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#90caf9"
+      }
+    },
+    {
+      "id": "roads_major",
+      "type": "line",
+      "source": "openfreemap",
+      "source-layer": "transportation",
+      "filter": ["in", "class", "motorway", "trunk", "primary"],
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": {
+          "base": 1.4,
+          "stops": [[6, 0.5], [12, 3], [16, 15]]
+        },
+        "line-outline-color": "#e0e0e0",
+        "line-outline-width": 1
+      }
+    }
+  ]
+}

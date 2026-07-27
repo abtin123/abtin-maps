@@ -1,0 +1,12 @@
+{
+  "version": 8,
+  "name": "Minimalist",
+  "sources": {
+    "openfreemap": { "type": "vector", "url": "https://tiles.openfreemap.org/tiles.json" }
+  },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#f0f0f0" } },
+    { "id": "roads", "type": "line", "source": "openfreemap", "source-layer": "transportation", 
+      "paint": { "line-color": "#d0d0d0", "line-width": 2 } }
+  ]
+}

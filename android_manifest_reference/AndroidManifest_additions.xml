@@ -1,0 +1,38 @@
+<!--
+  این فایل یک "مرجع" است، نه فایل نهایی پروژه.
+  بعد از اجرای `flutter create .` که پوشه android/ را می‌سازد،
+  محتوای زیر را داخل android/app/src/main/AndroidManifest.xml ادغام کنید.
+-->
+
+<!-- ===== مجوزهای مورد نیاز (داخل تگ <manifest>، قبل از <application>) ===== -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+<!-- ===== داخل تگ <activity> اصلی (android:name=".MainActivity") ===== -->
+
+<!-- Deep Link با scheme اختصاصی: abtin://navigate?lat=..&lng=..&label=..
+     این باعث می‌شود اپ‌هایی مثل اسنپ بتوانند مسیریابی آبتین را مستقیم صدا بزنند. -->
+<intent-filter android:autoVerify="true">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="abtin" android:host="navigate" />
+</intent-filter>
+
+<!--
+  برای پشتیبانی از App Links با دامنه واقعی وب (اختیاری، برای اعتبارسنجی ۱۰۰٪
+  توسط سیستم Android به‌جای نمایش انتخابگر اپ) باید یک دامنه‌ی متعلق به شما و
+  فایل assetlinks.json در آن دامنه منتشر شود:
+
+<intent-filter android:autoVerify="true">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="https" android:host="app.abtin.ir" android:pathPrefix="/navigate" />
+</intent-filter>
+-->

@@ -1,0 +1,12 @@
+{
+  "version": 8,
+  "name": "Midnight Purple",
+  "sources": {
+    "openfreemap": { "type": "vector", "url": "https://tiles.openfreemap.org/tiles.json" }
+  },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#1a0b2e" } },
+    { "id": "roads", "type": "line", "source": "openfreemap", "source-layer": "transportation", 
+      "paint": { "line-color": "#4b0082", "line-width": 3 } }
+  ]
+}
