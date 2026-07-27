@@ -1,9 +1,0 @@
-# این فایل را کپی کن به android/key.properties (که در .gitignore است و کامیت نمی‌شود)
-# و مقادیر واقعی را در آن بگذار. برای بیلد لوکال روی CI به‌جای این فایل
-# می‌توانی متغیرهای محیطی ABTIN_KEYSTORE_PATH / ABTIN_KEYSTORE_PASSWORD /
-# ABTIN_KEYSTORE_ALIAS / ABTIN_KEYSTORE_KEY_PASSWORD را ست کنی.
-
-storeFile=keystore/keystore.p12
-storePassword=YOUR_STORE_PASSWORD
-keyAlias=YOUR_KEY_ALIAS
-keyPassword=YOUR_KEY_PASSWORD
