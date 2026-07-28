@@ -1,3 +1,4 @@
+```yaml
 name: Build Iran GraphHopper Graph
 
 on:
@@ -23,11 +24,11 @@ jobs:
             graph.location: graph-cache
             profiles:
               - name: car
-                custom_model_files: [car.json]
+                custom_model_files: [car_custom.json]
             profiles_ch:
               - profile: car
           CFG
-          echo '{}' > car.json
+          echo '{}' > car_custom.json
 
       - name: Build graph
         run: |
@@ -44,3 +45,4 @@ jobs:
           files: iran-graph.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
