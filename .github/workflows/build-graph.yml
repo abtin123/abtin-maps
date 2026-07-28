@@ -21,6 +21,7 @@ jobs:
           graphhopper:
             datareader.file: iran-latest.osm.pbf
             graph.location: graph-cache
+            import.osm.ignored_highways: ""
             profiles:
               - name: car
                 custom_model_files: [car_custom.json]
