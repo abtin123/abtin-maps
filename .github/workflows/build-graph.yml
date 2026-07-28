@@ -1,0 +1,46 @@
+name: Build Iran GraphHopper Graph
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Iran OSM data
+        run: |
+          curl -L -o iran-latest.osm.pbf https://download.geofabrik.de/asia/iran-latest.osm.pbf
+
+      - name: Download GraphHopper
+        run: |
+          curl -L -o graphhopper.jar https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar
+
+      - name: Create config
+        run: |
+          cat > config.yml << 'CFG'
+          graphhopper:
+            datareader.file: iran-latest.osm.pbf
+            graph.location: graph-cache
+            profiles:
+              - name: car
+                custom_model_files: [car_custom.json]
+            profiles_ch:
+              - profile: car
+          CFG
+          echo '{}' > car_custom.json
+
+      - name: Build graph
+        run: |
+          java -Xmx6g -jar graphhopper.jar import config.yml
+
+      - name: Zip graph
+        run: |
+          zip -r iran-graph.zip graph-cache
+
+      - name: Upload as Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: graph-iran-latest
+          files: iran-graph.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
