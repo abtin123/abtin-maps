@@ -1,0 +1,123 @@
+name: Build Abtin Map (ABTINMAP v1)
+
+# ورک‌فلوی ساخت بسته‌ی کشوری نقشه + مسیریابی در یک فایل .abm
+# محل نصب: .github/workflows/build-abtin-map.yml  در مخزن abtin123/abtin-maps
+# اجرای دستی: Actions -> Build Abtin Map -> Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      country_code:
+        description: "کد کشور (فعلاً فقط IR)"
+        required: true
+        default: "IR"
+      pbf_url:
+        description: "آدرس .osm.pbf"
+        required: true
+        default: "https://download.geofabrik.de/asia/iran-latest.osm.pbf"
+      release_tag:
+        description: "تگ ریلیز"
+        required: true
+        default: "maps-v1"
+      base_zoom:
+        description: "زوم کاشی پایه"
+        required: true
+        default: "12"
+      drop_buildings:
+        description: "حذف ساختمان‌ها (اگر حجم از ۳۰۰MB رد شد)"
+        type: boolean
+        default: false
+  schedule:
+    # بازسازی ماهانه از داده‌ی تازه‌ی OSM
+    - cron: "0 3 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      CODE: ${{ github.event.inputs.country_code || 'IR' }}
+      PBF_URL: ${{ github.event.inputs.pbf_url || 'https://download.geofabrik.de/asia/iran-latest.osm.pbf' }}
+      TAG: ${{ github.event.inputs.release_tag || 'maps-v1' }}
+      BASE_ZOOM: ${{ github.event.inputs.base_zoom || '12' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: آزاد کردن فضای دیسک
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: نصب وابستگی‌ها
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libboost-all-dev libexpat1-dev zlib1g-dev libbz2-dev
+          python -m pip install --upgrade pip
+          pip install osmium zstandard
+
+      - name: دانلود داده‌ی OSM
+        run: |
+          mkdir -p data out
+          curl -fL --retry 3 -o data/src.osm.pbf "$PBF_URL"
+          ls -lh data/src.osm.pbf
+
+      - name: تبدیل به ABTINMAP
+        run: |
+          python3 tools/abtinmap_build.py data/src.osm.pbf \
+            -o out/${CODE}.abm \
+            --region "$CODE" \
+            --base-zoom "$BASE_ZOOM" \
+            --overview-zooms 6,9 \
+            --zstd-level 19 \
+            --poi-min-zoom 14 \
+            ${{ github.event.inputs.drop_buildings == 'true' && '--drop-buildings' || '' }}
+          rm -f data/src.osm.pbf
+          ls -lh out/
+
+      - name: اعتبارسنجی فایل خروجی
+        run: |
+          python3 tools/abtinmap_inspect.py out/${CODE}.abm | tee out/report.txt
+          SIZE=$(stat -c%s out/${CODE}.abm)
+          MB=$((SIZE/1000000))
+          echo "حجم: ${MB} MB"
+          if [ "$MB" -gt 320 ]; then
+            echo "::warning::حجم ${MB}MB از بازه‌ی هدف (۲۰۰-۳۰۰MB) بیشتر است — drop_buildings را روشن کنید"
+          fi
+          if [ "$MB" -lt 20 ]; then
+            echo "::error::خروجی مشکوک به خرابی است (${MB}MB)"; exit 1
+          fi
+
+      - name: ساخت manifest و تکه‌ها
+        run: |
+          python3 tools/make_manifest.py out/${CODE}.abm \
+            --code "$CODE" --out-dir out \
+            --release-tag "$TAG" --repo "${GITHUB_REPOSITORY}"
+          cat out/manifest.json
+
+      - name: انتشار ریلیز
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Abtin Maps ${{ env.TAG }}
+          body: |
+            بسته‌ی یکپارچه‌ی نقشه + مسیریابی (ABTINMAP v1) — بدون فایل گراف جدا و بدون کاشی آنلاین.
+
+            ```
+            ${{ env.CODE }}.abm  +  manifest.json
+            ```
+            اپ ابتدا `manifest.json` را می‌خواند، سپس فایل کشور را دانلود می‌کند.
+          files: |
+            out/${{ env.CODE }}.abm
+            out/${{ env.CODE }}.abm.part*
+            out/manifest.json
+            out/report.txt
+          fail_on_unmatched_files: false
