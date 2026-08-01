@@ -1,123 +1,242 @@
-name: Build Abtin Map (ABTINMAP v1)
-
-# ورک‌فلوی ساخت بسته‌ی کشوری نقشه + مسیریابی در یک فایل .abm
-# محل نصب: .github/workflows/build-abtin-map.yml  در مخزن abtin123/abtin-maps
-# اجرای دستی: Actions -> Build Abtin Map -> Run workflow
+name: Build Abtin Map
 
 on:
   workflow_dispatch:
     inputs:
-      country_code:
-        description: "کد کشور (فعلاً فقط IR)"
-        required: true
-        default: "IR"
-      pbf_url:
-        description: "آدرس .osm.pbf"
-        required: true
-        default: "https://download.geofabrik.de/asia/iran-latest.osm.pbf"
+      countries:
+        description: 'کدهای کشور جدا شده با کاما (مثلا IR,TR,IQ) یا all برای همه'
+        required: false
+        default: 'all'
+      force_rebuild:
+        description: 'کدهای کشور که صرف‌نظر از تاریخ دوباره ساخته شوند، یا all'
+        required: false
+        default: ''
       release_tag:
-        description: "تگ ریلیز"
-        required: true
-        default: "maps-v1"
-      base_zoom:
-        description: "زوم کاشی پایه"
-        required: true
-        default: "12"
-      drop_buildings:
-        description: "حذف ساختمان‌ها (اگر حجم از ۳۰۰MB رد شد)"
-        type: boolean
-        default: false
+        description: 'تگ ریلیز مقصد'
+        required: false
+        default: 'maps-v1'
   schedule:
-    # بازسازی ماهانه از داده‌ی تازه‌ی OSM
-    - cron: "0 3 1 * *"
+    - cron: '0 2 * * 1'   # هر دوشنبه ساعت 02:00 UTC
+    # - cron: '0 2 1 * *' # ماهانه (این خط را فعال و خط بالا را کامنت کنید)
 
 permissions:
   contents: write
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 330
-    env:
-      CODE: ${{ github.event.inputs.country_code || 'IR' }}
-      PBF_URL: ${{ github.event.inputs.pbf_url || 'https://download.geofabrik.de/asia/iran-latest.osm.pbf' }}
-      TAG: ${{ github.event.inputs.release_tag || 'maps-v1' }}
-      BASE_ZOOM: ${{ github.event.inputs.base_zoom || '12' }}
+env:
+  RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v1' }}
 
+jobs:
+  # ------------------------------------------------------------------
+  # فقط در اجرای زمان‌بندی‌شده: چک می‌کند کدام کشورها داده‌ی تازه‌تر دارند
+  # ------------------------------------------------------------------
+  check-updates:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: آزاد کردن فضای دیسک
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check for updates
+        id: check
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
-          df -h /
+          python3 tools/check_updates.py \
+            --state tools/build_state.json \
+            --force "${{ github.event.inputs.force_rebuild }}" \
+            --out-changed changed.txt \
+            --out-state-new state_new.json
+          echo "changed=$(cat changed.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Save new state
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-state-new
+          path: state_new.json
+
+  # ------------------------------------------------------------------
+  # ساخت ماتریس کشورهایی که باید ساخته شوند
+  # ------------------------------------------------------------------
+  plan:
+    needs: [check-updates]
+    if: always() && !failure() && !cancelled()
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_countries: ${{ steps.plan.outputs.has_countries }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build matrix
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CHANGED: ${{ needs.check-updates.outputs.changed }}
+          INPUT_COUNTRIES: ${{ github.event.inputs.countries }}
+          FORCE_REBUILD: ${{ github.event.inputs.force_rebuild }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+
+          event = os.environ.get("EVENT_NAME")
+          changed = os.environ.get("CHANGED", "")
+          input_countries = (os.environ.get("INPUT_COUNTRIES") or "all").strip()
+          force = (os.environ.get("FORCE_REBUILD") or "").strip()
+
+          with open("tools/countries.json", encoding="utf-8") as f:
+              all_countries = json.load(f)["countries"]
+          all_codes = {c["code"] for c in all_countries}
+
+          if event == "schedule":
+              codes = [c.strip().upper() for c in changed.split(",") if c.strip()]
+          elif force.strip().lower() == "all" or input_countries.lower() == "all":
+              codes = list(all_codes)
+          else:
+              codes = [c.strip().upper() for c in input_countries.split(",") if c.strip()]
+
+          codes = sorted({c for c in codes if c in all_codes})
+          matrix = {"country": [c for c in all_countries if c["code"] in codes]}
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"matrix={json.dumps(matrix)}\n")
+              out.write(f"has_countries={'true' if codes else 'false'}\n")
+
+          print("کشورهای انتخاب‌شده:", codes or "(هیچ‌کدام)")
+          PYEOF
+
+  # ------------------------------------------------------------------
+  # برای هر کشور یک job موازی و مستقل (حداکثر ۴ همزمان)
+  # ------------------------------------------------------------------
+  build:
+    needs: [plan]
+    if: needs.plan.outputs.has_countries == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
-      - name: نصب وابستگی‌ها
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libboost-all-dev libexpat1-dev zlib1g-dev libbz2-dev
-          python -m pip install --upgrade pip
-          pip install osmium zstandard
+      - name: Install dependencies
+        run: pip install osmium zstandard
 
-      - name: دانلود داده‌ی OSM
+      - name: Download source pbf
         run: |
-          mkdir -p data out
-          curl -fL --retry 3 -o data/src.osm.pbf "$PBF_URL"
-          ls -lh data/src.osm.pbf
+          mkdir -p src
+          curl -L --fail --retry 3 --retry-delay 5 \
+            -o "src/${{ matrix.country.code }}.osm.pbf" \
+            "${{ matrix.country.pbf_url }}"
 
-      - name: تبدیل به ABTINMAP
+      - name: Build .abm
         run: |
-          python3 tools/abtinmap_build.py data/src.osm.pbf \
-            -o out/${CODE}.abm \
-            --region "$CODE" \
-            --base-zoom "$BASE_ZOOM" \
-            --overview-zooms 6,9 \
-            --zstd-level 19 \
-            --poi-min-zoom 14 \
-            ${{ github.event.inputs.drop_buildings == 'true' && '--drop-buildings' || '' }}
-          rm -f data/src.osm.pbf
-          ls -lh out/
+          mkdir -p out
+          python3 tools/abtinmap_build.py "src/${{ matrix.country.code }}.osm.pbf" \
+            -o "out/${{ matrix.country.code }}.abm" \
+            --region "${{ matrix.country.code }}"
 
-      - name: اعتبارسنجی فایل خروجی
+      - name: Validate output
+        run: python3 tools/abtinmap_inspect.py "out/${{ matrix.country.code }}.abm"
+
+      - name: Make manifest
         run: |
-          python3 tools/abtinmap_inspect.py out/${CODE}.abm | tee out/report.txt
-          SIZE=$(stat -c%s out/${CODE}.abm)
-          MB=$((SIZE/1000000))
-          echo "حجم: ${MB} MB"
-          if [ "$MB" -gt 320 ]; then
-            echo "::warning::حجم ${MB}MB از بازه‌ی هدف (۲۰۰-۳۰۰MB) بیشتر است — drop_buildings را روشن کنید"
+          python3 tools/make_manifest.py "out/${{ matrix.country.code }}.abm" \
+            --code "${{ matrix.country.code }}" \
+            --name-fa "${{ matrix.country.name_fa }}" \
+            --name-en "${{ matrix.country.name_en }}" \
+            --out-dir out \
+            --release-tag "${{ env.RELEASE_TAG }}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.country.code }}
+          path: |
+            out/${{ matrix.country.code }}.abm
+            out/${{ matrix.country.code }}.abm.part*
+            out/manifest-${{ matrix.country.code }}.json
+          if-no-files-found: ignore
+
+  # ------------------------------------------------------------------
+  # جمع‌آوری artifact ها، ادغام manifest، انتشار ریلیز مشترک
+  # ------------------------------------------------------------------
+  release:
+    needs: [build]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-*
+          path: merged
+
+      - name: Fetch previous manifest (کشورهای ساخته‌نشده در این اجرا دست‌نخورده بمانند)
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        run: |
+          mkdir -p merged/prev-release
+          curl -L --fail -o merged/prev-release/manifest.json \
+            "https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/manifest.json" || true
+          if [ -s merged/prev-release/manifest.json ]; then
+            python3 - <<'PYEOF'
+          import json, os
+          with open("merged/prev-release/manifest.json", encoding="utf-8") as f:
+              m = json.load(f)
+          for c in m.get("countries", []):
+              with open(f"merged/prev-release/manifest-{c['code']}.json", "w", encoding="utf-8") as out:
+                  json.dump(c, out, ensure_ascii=False, indent=2)
+          os.remove("merged/prev-release/manifest.json")
+          PYEOF
           fi
-          if [ "$MB" -lt 20 ]; then
-            echo "::error::خروجی مشکوک به خرابی است (${MB}MB)"; exit 1
-          fi
 
-      - name: ساخت manifest و تکه‌ها
+      - name: Merge manifests
         run: |
-          python3 tools/make_manifest.py out/${CODE}.abm \
-            --code "$CODE" --out-dir out \
-            --release-tag "$TAG" --repo "${GITHUB_REPOSITORY}"
-          cat out/manifest.json
+          mkdir -p out
+          python3 tools/merge_manifests.py --in-dir merged --out out/manifest.json \
+            --release-tag "${{ env.RELEASE_TAG }}"
 
-      - name: انتشار ریلیز
+      - name: Collect release assets
+        run: |
+          mkdir -p release_assets
+          find merged -type f \( -name "*.abm" -o -name "*.abm.part*" \) -exec cp {} release_assets/ \;
+          cp out/manifest.json release_assets/
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TAG }}
-          name: Abtin Maps ${{ env.TAG }}
-          body: |
-            بسته‌ی یکپارچه‌ی نقشه + مسیریابی (ABTINMAP v1) — بدون فایل گراف جدا و بدون کاشی آنلاین.
-
-            ```
-            ${{ env.CODE }}.abm  +  manifest.json
-            ```
-            اپ ابتدا `manifest.json` را می‌خواند، سپس فایل کشور را دانلود می‌کند.
-          files: |
-            out/${{ env.CODE }}.abm
-            out/${{ env.CODE }}.abm.part*
-            out/manifest.json
-            out/report.txt
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: release_assets/*
           fail_on_unmatched_files: false
+
+  # ------------------------------------------------------------------
+  # فقط در اجرای زمان‌بندی‌شده: ذخیره‌ی تاریخ آخرین ساخت موفق در ریپو
+  # ------------------------------------------------------------------
+  update-state:
+    needs: [check-updates, release]
+    if: always() && github.event_name == 'schedule' && needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-state-new
+
+      - name: Commit updated build_state.json
+        run: |
+          cp state_new.json tools/build_state.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/build_state.json
+          git commit -m "chore: update build_state.json [skip ci]" || echo "چیزی برای کامیت نبود"
+          git push
