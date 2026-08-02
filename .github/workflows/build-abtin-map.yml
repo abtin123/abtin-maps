@@ -82,6 +82,38 @@ jobs:
               missing = want - {c["code"].upper() for c in sel}
               if missing:
                   print(f"::warning::کد ناشناخته در countries.json: {sorted(missing)}")
+
+          # ایالات متحده (~11 گیگ) روی runner استاندارد گیت‌هاب (سقف سخت‌افزاری
+          # ۶ ساعت اجرا) هیچ‌وقت کامل نمی‌شود. به‌جای دانلود us-latest.osm.pbf
+          # یکجا، به ۵ منطقه‌ی سرشماری (census region) که Geofabrik از قبل
+          # جدا کلیپ کرده تقسیمش می‌کنیم؛ هرکدام یک matrix job جدا و کاملا
+          # زیر محدودیت زمانی می‌شود. هر منطقه در manifest نهایی یک کد
+          # جداگانه می‌گیرد (US-NE, US-MW, US-SO, US-WE, US-PA).
+          US_REGIONS = [
+              {"code": "US-NE", "name_fa": "ایالات متحده - شمال شرق",
+               "name_en": "United States - Northeast",
+               "pbf_url": "https://download.geofabrik.de/north-america/us-northeast-latest.osm.pbf"},
+              {"code": "US-MW", "name_fa": "ایالات متحده - غرب میانه",
+               "name_en": "United States - Midwest",
+               "pbf_url": "https://download.geofabrik.de/north-america/us-midwest-latest.osm.pbf"},
+              {"code": "US-SO", "name_fa": "ایالات متحده - جنوب",
+               "name_en": "United States - South",
+               "pbf_url": "https://download.geofabrik.de/north-america/us-south-latest.osm.pbf"},
+              {"code": "US-WE", "name_fa": "ایالات متحده - غرب",
+               "name_en": "United States - West",
+               "pbf_url": "https://download.geofabrik.de/north-america/us-west-latest.osm.pbf"},
+              {"code": "US-PA", "name_fa": "ایالات متحده - آلاسکا و هاوایی",
+               "name_en": "United States - Pacific (Alaska & Hawaii)",
+               "pbf_url": "https://download.geofabrik.de/north-america/us-pacific-latest.osm.pbf"},
+          ]
+          expanded = []
+          for c in sel:
+              if c["code"].upper() == "US":
+                  expanded.extend(US_REGIONS)
+              else:
+                  expanded.append(c)
+          sel = expanded
+
           matrix = {"include": [
               {"code": c["code"], "name_fa": c["name_fa"],
                "name_en": c["name_en"], "pbf_url": c["pbf_url"]} for c in sel]}
@@ -167,7 +199,12 @@ jobs:
   # ------------------------------------------------------------- release ----
   release:
     needs: [plan, build]
-    if: always() && needs.plan.outputs.count != '0' && contains(needs.build.result, 'success')
+    # قبلا اینجا `contains(needs.build.result, 'success')` بود که با فیل‌شدن
+    # حتی یک کشور در matrix، کل needs.build.result می‌شد "failure" و release
+    # هیچ‌وقت اجرا نمی‌شد — حتی اگر بقیه‌ی کشورها موفق ساخته و آپلود شده بودن.
+    # حالا فقط وقتی کل جاب build کنسل شده (نه فیل) یا اصلا اجرا نشده، release
+    # رو رد می‌کنیم؛ در غیر این صورت با هر آرتیفکتی که موجود باشه ریلیز می‌کنیم.
+    if: always() && needs.plan.outputs.count != '0' && needs.build.result != 'cancelled' && needs.build.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
