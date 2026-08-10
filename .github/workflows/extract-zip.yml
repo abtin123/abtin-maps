@@ -1,37 +1,34 @@
-name: Extract Zip
+name: Extract All Zips and Remove Them
 
 on:
   workflow_dispatch:
-    inputs:
-      zip_path:
-        description: 'مسیر فایل زیپ در ریپو (مثلا archive.zip)'
-        required: true
-        type: string
-      extract_to:
-        description: 'مسیر مقصد برای اکسترکت'
-        required: false
-        default: '.'
-      commit_message:
-        description: 'پیام کامیت'
-        required: false
-        default: 'chore: extract zip contents'
+
+permissions:
+  contents: write
 
 jobs:
-  extract-zip:
+  extract:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_PAT }}
 
-      - name: Extract zip
+      - name: Find, extract and delete all zip files
         run: |
-          mkdir -p "${{ github.event.inputs.extract_to }}"
-          unzip -o "${{ github.event.inputs.zip_path }}" -d "${{ github.event.inputs.extract_to }}"
+          find . -type f -name "*.zip" | while read -r zip_file; do
+            echo "Extracting: $zip_file"
+            extract_dir=$(dirname "$zip_file")
+            unzip -o "$zip_file" -d "$extract_dir"
+            rm -f "$zip_file"
+          done
 
-      - name: Commit and push
+      - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "${{ github.event.inputs.commit_message }}" || echo "چیزی برای کامیت نبود"
+          git commit -m "Extract all zip files and remove archives" || echo "Nothing to commit"
           git push
+        
