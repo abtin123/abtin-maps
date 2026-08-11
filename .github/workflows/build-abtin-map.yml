@@ -16,6 +16,7 @@ on:
         required: false
         default: ''
   schedule:
+    # هر دوشنبه ۰۲:۰۰ UTC — فقط کشورهایی که داده‌شان تازه شده بازسازی می‌شوند
     - cron: '0 2 * * 1'
 
 permissions:
@@ -29,6 +30,7 @@ env:
   RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v1' }}
 
 jobs:
+  # --------------------------------------------------------------- plan ----
   plan:
     runs-on: ubuntu-latest
     outputs:
@@ -38,26 +40,33 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: بررسی به‌روزرسانی منابع Geofabrik
-        id: changed
+      # دریافت لیست فایل‌های موجود در ریلیز برای بررسی هوشمند
+      - name: دریافت لیست فایل‌های ریلیز
+        id: release-assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # دریافت لیست فایل‌های موجود در ریلیز برای بررسی هوشمند
-          echo "دریافت لیست فایل‌های ریلیز..."
-          EXISTING_FILES=""
+          echo "دریافت لیست فایل‌های ریلیز ${RELEASE_TAG}..."
           if gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name' > existing_assets.txt 2>/dev/null; then
-             EXISTING_FILES=$(cat existing_assets.txt)
+             echo "لیست دریافت شد."
+          else
+             echo "ریلیز یافت نشد یا خالی است."
+             touch existing_assets.txt
           fi
-          # ذخیره لیست در خروجی برای استفاده در مرحله بعد
-          echo "existing_files<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$EXISTING_FILES" >> "$GITHUB_OUTPUT"
+          # ذخیره محتوا در خروجی برای استفاده در پایتون
+          echo "assets<<EOF" >> "$GITHUB_OUTPUT"
+          cat existing_assets.txt >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+      # در اجرای زمان‌بندی‌شده، فقط کشورهای دارای داده‌ی تازه انتخاب می‌شوند
+      - name: بررسی به‌روزرسانی منابع Geofabrik
+        id: changed
+        run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             python3 tools/check_updates.py \
               --countries tools/countries.json \
@@ -79,39 +88,46 @@ jobs:
         env:
           CODES: ${{ steps.changed.outputs.codes }}
           FORCE: ${{ github.event.inputs.force_rebuild }}
-          EXISTING_FILES: ${{ steps.changed.outputs.existing_files }}
+          EXISTING_ASSETS: ${{ steps.release-assets.outputs.assets }}
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os
+          import json, os, sys
           
           codes = (os.environ.get("CODES") or "").strip()
           force = (os.environ.get("FORCE") or "").strip()
-          existing_files_str = os.environ.get("EXISTING_FILES") or ""
-          existing_set = set(existing_files_str.splitlines())
+          assets_str = os.environ.get("EXISTING_ASSETS") or ""
+          existing_set = set(assets_str.splitlines())
           
           data = json.load(open("tools/countries.json", encoding="utf-8"))["countries"]
           
-          # لیست اولیه کشورها
+          # 1. انتخاب اولیه بر اساس ورودی
           if codes.lower() in ("", "all"):
               candidates = data
           else:
               want = {c.strip().upper() for c in codes.split(",") if c.strip()}
               candidates = [c for c in data if c["code"].upper() in want]
+              missing = want - {c["code"].upper() for c in candidates}
+              if missing:
+                  print(f"::warning::کد ناشناخته: {sorted(missing)}", file=sys.stderr)
 
-          # --- منطق فیلتر کردن (اصلاح اصلی) ---
+          # 2. فیلتر هوشمند (رد کردن کشورهایی که قبلا ساخته شده‌اند)
           sel = []
           skipped = []
           
+          # لیست کدهای强制 (Force)
+          force_list = [f.strip().upper() for f in force.split(",")] if force else []
+          force_all = "all" in force_list
+
           for c in candidates:
               code = c["code"].upper()
               
-              # اگر Force فعال باشد، بدون شرط اضافه کن
-              if force == "all" or force == code or (force and code in force.split(",")):
+              # اگر Force فعال باشد (برای این کشور یا همه)، بدون شرط اضافه کن
+              if force_all or code in force_list:
                   sel.append(c)
                   continue
               
-              # اگر All بود، چک کن آیا فایلش در ریلیز هست؟
-              # فرمت فایل‌ها معمولا CODE.abm یا CODE.abm.part0 است
+              # اگر ورودی "all" بود، چک کن آیا فایلش در ریلیز هست؟
+              # فرمت فایل‌ها: CODE.abm یا CODE.abm.part0
               has_main = f"{code}.abm" in existing_set
               has_part = any(f.startswith(f"{code}.abm.part") for f in existing_set)
               
@@ -121,9 +137,10 @@ jobs:
                   sel.append(c)
 
           if skipped:
-              print(f"::notice::کشورهای رد شده (چون قبلا ساخته شده‌اند): {', '.join(skipped)}")
+              # چاپ در stderr تا وارد GITHUB_OUTPUT نشود و ارور ندهد
+              print(f"ℹ️ رد شده (قبلا ساخته شده): {', '.join(skipped)}", file=sys.stderr)
 
-          # بسط دادن US
+          # 3. بسط دادن US به مناطق
           US_REGIONS = [
               {"code": "US-NE", "name_fa": "ایالات متحده - شمال شرق", "name_en": "United States - Northeast", "pbf_url": "https://download.geofabrik.de/north-america/us-northeast-latest.osm.pbf"},
               {"code": "US-MW", "name_fa": "ایالات متحده - غرب میانه", "name_en": "United States - Midwest", "pbf_url": "https://download.geofabrik.de/north-america/us-midwest-latest.osm.pbf"},
@@ -154,11 +171,13 @@ jobs:
           echo "### 🗺️ برنامه ساخت" >> $GITHUB_STEP_SUMMARY
           echo "تعداد کشورهای انتخاب‌شده: **${{ steps.build-matrix.outputs.count }}**" >> $GITHUB_STEP_SUMMARY
 
+  # -------------------------------------------------------------- build ----
   build:
     needs: plan
     if: needs.plan.outputs.count != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -166,6 +185,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -187,26 +207,33 @@ jobs:
           mkdir -p src out
           FILE="src/${{ matrix.code }}.osm.pbf"
           URL="${{ matrix.pbf_url }}"
+          
           MIN_BYTES=200000
           ATTEMPT=1
           MAX_ATTEMPTS=6
+          
           while :; do
             echo "تلاش دانلود $ATTEMPT/$MAX_ATTEMPTS برای ${{ matrix.code }}"
             rm -f "$FILE"
             curl -fL --retry 5 --retry-delay 10 --retry-all-errors \
               -A "Mozilla/5.0 (compatible; AbtinMapBuilder/1.0)" \
               -o "$FILE" "$URL"
+            
             SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
+            
             if [ "$SIZE" -ge "$MIN_BYTES" ] && python3 -c "import sys; f=open('$FILE','rb'); h=f.read(1); sys.exit(1 if h in (b'<', b'{') else 0)"; then
               break
             fi
+            
             echo "::warning::فایل دانلودشده برای ${{ matrix.code }} مشکوک است (سایز: ${SIZE} بایت)"
             if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
               echo "::error::دانلود PBF برای ${{ matrix.code }} شکست خورد"
               exit 1
             fi
+            
             ATTEMPT=$((ATTEMPT+1))
             SLEEP=$(( (RANDOM % 60) + 30 * ATTEMPT ))
+            echo "صبر $SLEEP ثانیه..."
             sleep "$SLEEP"
           done
           ls -lh "$FILE"
@@ -225,7 +252,7 @@ jobs:
       - name: اعتبارسنجی خروجی
         run: python3 tools/abtinmap_inspect.py "out/${{ matrix.code }}.abm"
 
-      - name: دانلود نسخه‌ی قبلیِ همین کشور
+      - name: دانلود نسخه‌ی قبلیِ همین کشور (برای پچ افزایشی)
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -251,6 +278,7 @@ jobs:
           if [ -f "out/patch-${{ matrix.code }}.json" ]; then
             PATCH_ARG="--patch-json out/patch-${{ matrix.code }}.json"
           fi
+          
           python3 tools/make_manifest.py "out/${{ matrix.code }}.abm" \
             --code "${{ matrix.code }}" \
             --name-fa "${{ matrix.name_fa }}" \
@@ -259,6 +287,7 @@ jobs:
             --release-tag "${RELEASE_TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
             $PATCH_ARG
+            
           if ls out/${{ matrix.code }}.abm.part0 >/dev/null 2>&1; then
             rm -f "out/${{ matrix.code }}.abm"
           fi
@@ -279,6 +308,7 @@ jobs:
           path: tools/string_state/${{ matrix.code }}.json
           retention-days: 3
 
+  # ------------------------------------------------------------ release ----
   release:
     needs: [plan, build]
     if: always() && needs.plan.outputs.count != '0' && needs.build.result != 'cancelled' && needs.build.result != 'skipped'
@@ -286,6 +316,7 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -330,6 +361,7 @@ jobs:
             --in-dir merged \
             --out out/manifest.json \
             --release-tag "${RELEASE_TAG}"
+            
           find merged -type f \( -name '*.abm' -o -name '*.abm.part*' \
                                 -o -name '*.abmpatch' -o -name 'patch-*.json' \) \
             -exec mv -t out/ {} +
