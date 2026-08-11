@@ -4,78 +4,142 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Build mode: all or custom"
+        description: "all or custom"
         required: true
-        default: "custom"
+        default: custom
+        type: choice
+        options:
+          - all
+          - custom
+
       countries:
-        description: "Country codes separated by comma (example: IR,DE,FR)"
+        description: "Country codes: IR,DE,FR"
         required: false
         default: ""
-      force_rebuild:
+
+      force:
         description: "Force rebuild"
         required: false
-        default: "false"
+        default: false
+        type: boolean
+
 
 jobs:
+
   prepare:
+
     runs-on: ubuntu-latest
+
     outputs:
-      countries: ${{ steps.prepare.outputs.countries }}
+      matrix: ${{ steps.prepare.outputs.matrix }}
 
     steps:
+
       - uses: actions/checkout@v4
 
-      - name: Prepare changed countries
+
+      - name: Prepare countries
         id: prepare
         shell: bash
         run: |
+
           MODE="${{ inputs.mode }}"
-          SELECTED="${{ inputs.countries }}"
-          FORCE="${{ inputs.force_rebuild }}"
+          FORCE="${{ inputs.force }}"
+          INPUT="${{ inputs.countries }}"
+
 
           if [ "$MODE" = "all" ]; then
-            COUNTRIES=$(python3 tools/get_countries.py)
+
+            COUNTRIES=$(python3 - <<'PY'
+import json
+with open("tools/countries.json") as f:
+    data=json.load(f)
+
+for c in data:
+    print(c["code"])
+PY
+)
+
           else
-            COUNTRIES=$(echo "$SELECTED" | tr ',' ' ')
+
+            COUNTRIES=$(echo "$INPUT" | tr ',' ' ')
+
           fi
 
-          BUILD=""
 
-          for COUNTRY in $COUNTRIES; do
+          LIST="[]"
+
+
+          for C in $COUNTRIES
+          do
+
             if [ "$FORCE" = "true" ]; then
-              BUILD="$BUILD $COUNTRY"
-              continue
+              NEED=1
+            else
+
+              python3 tools/check_updates.py "$C"
+
+              if [ $? -eq 0 ]; then
+                NEED=1
+              else
+                echo "Skip $C"
+                NEED=0
+              fi
+
             fi
 
-            if python3 tools/check_updates.py "$COUNTRY"; then
-              BUILD="$BUILD $COUNTRY"
-            else
-              echo "Skip $COUNTRY - already up to date"
+
+            if [ "$NEED" = "1" ]; then
+
+              LIST=$(echo "$LIST" | jq ". + [\"$C\"]")
+
             fi
+
           done
 
-          echo "countries=$(echo $BUILD | tr ' ' '\n' | jq -R . | jq -s -c .)" >> "$GITHUB_OUTPUT"
+
+          echo "matrix=$LIST" >> $GITHUB_OUTPUT
+
+
 
   build:
+
     needs: prepare
-    if: needs.prepare.outputs.countries != '[]'
+
+    if: needs.prepare.outputs.matrix != '[]'
+
 
     runs-on: ubuntu-latest
 
+
     strategy:
+
+      fail-fast: false
+
       matrix:
-        country: ${{ fromJson(needs.prepare.outputs.countries) }}
+
+        country: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
 
     steps:
+
+
       - uses: actions/checkout@v4
 
+
       - name: Build map
+
         run: |
+
           python3 tools/abtinmap_build.py \
           ${{ matrix.country }}.osm.pbf \
           -o output/${{ matrix.country }}.abm \
           --region ${{ matrix.country }}
 
-      - name: Update manifest
+
+
+      - name: Create manifest
+
         run: |
+
           python3 tools/make_manifest.py
