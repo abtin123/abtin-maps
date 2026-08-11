@@ -1,0 +1,97 @@
+name: Build Abtin Maps
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: all or custom
+        required: true
+        default: custom
+        type: choice
+        options:
+          - all
+          - custom
+      countries:
+        description: Country codes separated by comma (IR,DE,FR)
+        required: false
+        default: ""
+      force:
+        description: Force rebuild
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare countries
+        id: prepare
+        shell: bash
+        run: |
+          MODE="${{ inputs.mode }}"
+          FORCE="${{ inputs.force }}"
+          INPUT="${{ inputs.countries }}"
+
+          if [ "$MODE" = "all" ]; then
+            COUNTRIES=$(python3 - <<'PY'
+import json
+with open("tools/countries.json") as f:
+    data=json.load(f)
+for c in data:
+    print(c["code"])
+PY
+)
+          else
+            COUNTRIES=$(echo "$INPUT" | tr ',' ' ')
+          fi
+
+          LIST="[]"
+
+          for C in $COUNTRIES
+          do
+            if [ "$FORCE" = "true" ]; then
+              NEED=1
+            else
+              python3 tools/check_updates.py "$C"
+              if [ $? -eq 0 ]; then
+                NEED=1
+              else
+                echo "Skip $C"
+                NEED=0
+              fi
+            fi
+
+            if [ "$NEED" = "1" ]; then
+              LIST=$(echo "$LIST" | jq ". + ["$C"]")
+            fi
+          done
+
+          echo "matrix=$LIST" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.matrix != '[]'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        country: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build map
+        run: |
+          python3 tools/abtinmap_build.py           ${{ matrix.country }}.osm.pbf           -o output/${{ matrix.country }}.abm           --region ${{ matrix.country }}
+
+      - name: Create manifest
+        run: |
+          python3 tools/make_manifest.py
