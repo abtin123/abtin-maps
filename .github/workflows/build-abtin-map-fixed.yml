@@ -1,0 +1,81 @@
+name: Build Abtin Maps
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Build mode: all or custom"
+        required: true
+        default: "custom"
+      countries:
+        description: "Country codes separated by comma (example: IR,DE,FR)"
+        required: false
+        default: ""
+      force_rebuild:
+        description: "Force rebuild"
+        required: false
+        default: "false"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      countries: ${{ steps.prepare.outputs.countries }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare changed countries
+        id: prepare
+        shell: bash
+        run: |
+          MODE="${{ inputs.mode }}"
+          SELECTED="${{ inputs.countries }}"
+          FORCE="${{ inputs.force_rebuild }}"
+
+          if [ "$MODE" = "all" ]; then
+            COUNTRIES=$(python3 tools/get_countries.py)
+          else
+            COUNTRIES=$(echo "$SELECTED" | tr ',' ' ')
+          fi
+
+          BUILD=""
+
+          for COUNTRY in $COUNTRIES; do
+            if [ "$FORCE" = "true" ]; then
+              BUILD="$BUILD $COUNTRY"
+              continue
+            fi
+
+            if python3 tools/check_updates.py "$COUNTRY"; then
+              BUILD="$BUILD $COUNTRY"
+            else
+              echo "Skip $COUNTRY - already up to date"
+            fi
+          done
+
+          echo "countries=$(echo $BUILD | tr ' ' '\n' | jq -R . | jq -s -c .)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.countries != '[]'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        country: ${{ fromJson(needs.prepare.outputs.countries) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build map
+        run: |
+          python3 tools/abtinmap_build.py \
+          ${{ matrix.country }}.osm.pbf \
+          -o output/${{ matrix.country }}.abm \
+          --region ${{ matrix.country }}
+
+      - name: Update manifest
+        run: |
+          python3 tools/make_manifest.py
