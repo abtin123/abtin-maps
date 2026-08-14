@@ -1,0 +1,68 @@
+name: Create Manifest Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all map artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: map-*
+          path: maps
+          merge-multiple: true
+
+      - name: Create manifest
+        run: |
+          mkdir -p release
+
+          cp maps/*.abm release/ || true
+
+          python3 <<'PY'
+          import os, json, glob
+
+          files = glob.glob("release/*.abm")
+
+          countries = []
+
+          for f in files:
+              name = os.path.basename(f).replace(".abm","")
+              size = os.path.getsize(f)
+
+              countries.append({
+                  "code": name,
+                  "file": name + ".abm",
+                  "size": size,
+                  "status": "ready"
+              })
+
+          manifest = {
+              "version": "1.0",
+              "count": len(countries),
+              "maps": countries
+          }
+
+          with open("release/manifest.json","w") as out:
+              json.dump(manifest,out,indent=2)
+
+          print("Maps:", len(countries))
+          PY
+
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: maps-latest
+          name: ABTINMAP Latest Maps
+          files: |
+            release/*.abm
+            release/manifest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
