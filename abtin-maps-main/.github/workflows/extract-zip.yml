@@ -1,0 +1,37 @@
+name: Extract Zip
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_path:
+        description: 'مسیر فایل زیپ در ریپو (مثلا archive.zip)'
+        required: true
+        type: string
+      extract_to:
+        description: 'مسیر مقصد برای اکسترکت'
+        required: false
+        default: '.'
+      commit_message:
+        description: 'پیام کامیت'
+        required: false
+        default: 'chore: extract zip contents'
+
+jobs:
+  extract-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Extract zip
+        run: |
+          mkdir -p "${{ github.event.inputs.extract_to }}"
+          unzip -o "${{ github.event.inputs.zip_path }}" -d "${{ github.event.inputs.extract_to }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "${{ github.event.inputs.commit_message }}" || echo "چیزی برای کامیت نبود"
+          git push
