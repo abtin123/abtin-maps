@@ -6,11 +6,11 @@ on:
       countries:
         description: 'کدهای کشور با کاما (مثلا IR,TR,IQ) یا all برای همه'
         required: false
-        default: 'IR'
+        default: 'all'
       release_tag:
         description: 'تگ ریلیز مقصد'
         required: false
-        default: 'maps-v1'
+        default: 'maps-v2'
       force_rebuild:
         description: 'ساخت اجباری صرف‌نظر از تاریخ منبع (کدها با کاما یا all)'
         required: false
@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v1' }}
+  RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v2' }}
 
 jobs:
   # --------------------------------------------------------------- plan ----
@@ -195,7 +195,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq libboost-program-options-dev libexpat1-dev zlib1g-dev libbz2-dev
           python3 -m pip install --quiet --upgrade pip
-          python3 -m pip install --quiet osmium zstandard
+          python3 -m pip install --quiet osmium zstandard Pillow
 
       - name: آزادسازی فضای دیسک
         run: |
@@ -244,10 +244,23 @@ jobs:
           python3 tools/abtinmap_build.py "src/${{ matrix.code }}.osm.pbf" \
             -o "out/${{ matrix.code }}.abm" \
             --region "${{ matrix.code }}" \
+            --profile compact \
+            --building-height-mode simple \
             --tmpdir "${RUNNER_TEMP}" \
             --string-state "tools/string_state/${{ matrix.code }}.json"
-          rm -f "src/${{ matrix.code }}.osm.pbf"
           ls -lh out/
+
+      - name: رندر کامل کاشی‌های نقشه روی سرور
+        run: |
+          python3 tools/rendered_tile_builder.py "src/${{ matrix.code }}.osm.pbf" \
+            --code "${{ matrix.code }}" --out-dir out --min-zoom 5 --max-zoom 13 --target-mb 260
+          ls -lh "out/${{ matrix.code }}.amap" "out/rendered-${{ matrix.code }}.json"
+
+      - name: ادغام اطلس آماده در فایل ABM همان کشور
+        run: |
+          python3 tools/embed_rendered_atlas.py "out/${{ matrix.code }}.abm" "out/${{ matrix.code }}.amap" --preview "out/${{ matrix.code }}.preview.webp"
+          rm -f "out/${{ matrix.code }}.amap" "out/${{ matrix.code }}.preview.webp" "out/rendered-${{ matrix.code }}.json" "src/${{ matrix.code }}.osm.pbf"
+          ls -lh "out/${{ matrix.code }}.abm"
 
       - name: اعتبارسنجی خروجی
         run: python3 tools/abtinmap_inspect.py "out/${{ matrix.code }}.abm"
