@@ -1,0 +1,218 @@
+{
+  "IR": {
+    "source_last_modified": "2026-08-02T22:38:44+00:00"
+  },
+  "TR": {
+    "source_last_modified": "2026-08-02T23:05:15+00:00"
+  },
+  "IQ": {
+    "source_last_modified": "2026-08-02T22:38:43+00:00"
+  },
+  "AF": {
+    "source_last_modified": "2026-08-03T05:01:58+00:00"
+  },
+  "PK": {
+    "source_last_modified": "2026-08-02T22:38:25+00:00"
+  },
+  "AZ": {
+    "source_last_modified": "2026-08-03T05:01:43+00:00"
+  },
+  "AM": {
+    "source_last_modified": "2026-08-03T05:01:47+00:00"
+  },
+  "SY": {
+    "source_last_modified": "2026-08-02T22:37:42+00:00"
+  },
+  "GE": {
+    "source_last_modified": "2026-08-03T05:35:11+00:00"
+  },
+  "IN": {
+    "source_last_modified": "2026-08-02T22:45:33+00:00"
+  },
+  "CN": {
+    "source_last_modified": "2026-08-02T22:50:50+00:00"
+  },
+  "JP": {
+    "source_last_modified": "2026-08-03T05:03:26+00:00"
+  },
+  "KR": {
+    "source_last_modified": "2026-08-02T22:38:56+00:00"
+  },
+  "TH": {
+    "source_last_modified": "2026-08-03T05:01:46+00:00"
+  },
+  "MY": {
+    "source_last_modified": "2026-08-02T22:39:30+00:00"
+  },
+  "ID": {
+    "source_last_modified": "2026-08-02T22:48:24+00:00"
+  },
+  "PH": {
+    "source_last_modified": "2026-08-02T22:47:35+00:00"
+  },
+  "VN": {
+    "source_last_modified": "2026-08-02T22:49:18+00:00"
+  },
+  "BD": {
+    "source_last_modified": "2026-08-02T22:39:20+00:00"
+  },
+  "LK": {
+    "source_last_modified": "2026-08-02T22:39:48+00:00"
+  },
+  "NP": {
+    "source_last_modified": "2026-08-02T22:38:16+00:00"
+  },
+  "KZ": {
+    "source_last_modified": "2026-08-03T05:02:02+00:00"
+  },
+  "UZ": {
+    "source_last_modified": "2026-08-03T05:01:55+00:00"
+  },
+  "TM": {
+    "source_last_modified": "2026-08-03T05:01:51+00:00"
+  },
+  "TJ": {
+    "source_last_modified": "2026-08-03T05:01:49+00:00"
+  },
+  "KG": {
+    "source_last_modified": "2026-08-02T22:47:45+00:00"
+  },
+  "MN": {
+    "source_last_modified": "2026-08-03T05:01:41+00:00"
+  },
+  "IL": {
+    "source_last_modified": "2026-08-03T05:01:53+00:00"
+  },
+  "JO": {
+    "source_last_modified": "2026-08-03T05:01:46+00:00"
+  },
+  "LB": {
+    "source_last_modified": "2026-08-03T05:01:49+00:00"
+  },
+  "YE": {
+    "source_last_modified": "2026-08-02T22:47:53+00:00"
+  },
+  "OM": {
+    "source_last_modified": "2026-08-03T05:35:11+00:00"
+  },
+  "DE": {
+    "source_last_modified": "2026-08-03T05:05:31+00:00"
+  },
+  "FR": {
+    "source_last_modified": "2026-08-02T23:17:46+00:00"
+  },
+  "GB": {
+    "source_last_modified": "2026-08-03T05:05:53+00:00"
+  },
+  "IT": {
+    "source_last_modified": "2026-08-02T23:06:36+00:00"
+  },
+  "ES": {
+    "source_last_modified": "2026-08-02T23:05:01+00:00"
+  },
+  "PT": {
+    "source_last_modified": "2026-08-02T23:03:00+00:00"
+  },
+  "NL": {
+    "source_last_modified": "2026-08-02T23:11:11+00:00"
+  },
+  "BE": {
+    "source_last_modified": "2026-08-02T23:07:10+00:00"
+  },
+  "CH": {
+    "source_last_modified": "2026-08-02T23:03:55+00:00"
+  },
+  "AT": {
+    "source_last_modified": "2026-08-02T23:02:54+00:00"
+  },
+  "SE": {
+    "source_last_modified": "2026-08-02T23:07:47+00:00"
+  },
+  "NO": {
+    "source_last_modified": "2026-08-02T23:02:21+00:00"
+  },
+  "DK": {
+    "source_last_modified": "2026-08-02T23:10:32+00:00"
+  },
+  "FI": {
+    "source_last_modified": "2026-08-02T23:09:18+00:00"
+  },
+  "PL": {
+    "source_last_modified": "2026-08-03T05:06:04+00:00"
+  },
+  "GR": {
+    "source_last_modified": "2026-08-02T23:10:24+00:00"
+  },
+  "RO": {
+    "source_last_modified": "2026-08-02T23:01:20+00:00"
+  },
+  "BG": {
+    "source_last_modified": "2026-08-02T23:09:30+00:00"
+  },
+  "HU": {
+    "source_last_modified": "2026-08-02T23:03:22+00:00"
+  },
+  "CZ": {
+    "source_last_modified": "2026-08-02T23:01:36+00:00"
+  },
+  "UA": {
+    "source_last_modified": "2026-08-02T23:09:21+00:00"
+  },
+  "RU": {
+    "source_last_modified": "2026-08-02T22:26:54+00:00"
+  },
+  "IE": {
+    "source_last_modified": "2026-08-03T05:04:33+00:00"
+  },
+  "US": {
+    "source_last_modified": "2026-08-02T23:55:03+00:00"
+  },
+  "CA": {
+    "source_last_modified": "2026-08-02T23:47:05+00:00"
+  },
+  "MX": {
+    "source_last_modified": "2026-08-02T23:42:38+00:00"
+  },
+  "BR": {
+    "source_last_modified": "2026-08-02T23:00:05+00:00"
+  },
+  "AR": {
+    "source_last_modified": "2026-08-02T22:58:05+00:00"
+  },
+  "CL": {
+    "source_last_modified": "2026-08-02T22:57:09+00:00"
+  },
+  "CO": {
+    "source_last_modified": "2026-08-02T22:57:44+00:00"
+  },
+  "PE": {
+    "source_last_modified": "2026-08-02T22:56:58+00:00"
+  },
+  "EG": {
+    "source_last_modified": "2026-08-03T05:01:02+00:00"
+  },
+  "MA": {
+    "source_last_modified": "2026-08-03T05:00:56+00:00"
+  },
+  "DZ": {
+    "source_last_modified": "2026-08-03T05:01:00+00:00"
+  },
+  "TN": {
+    "source_last_modified": "2026-08-03T05:00:42+00:00"
+  },
+  "ZA": {
+    "source_last_modified": "2026-08-03T05:01:13+00:00"
+  },
+  "NG": {
+    "source_last_modified": "2026-08-02T22:30:00+00:00"
+  },
+  "KE": {
+    "source_last_modified": "2026-08-02T22:31:16+00:00"
+  },
+  "AU": {
+    "source_last_modified": "2026-08-02T22:36:05+00:00"
+  },
+  "NZ": {
+    "source_last_modified": "2026-08-02T22:34:31+00:00"
+  }
+}
