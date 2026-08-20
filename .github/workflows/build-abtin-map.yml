@@ -105,8 +105,11 @@ jobs:
               candidates = data
           else:
               want = {c.strip().upper() for c in codes.split(",") if c.strip()}
-              candidates = [c for c in data if c["code"].upper() in want]
-              missing = want - {c["code"].upper() for c in candidates}
+              candidates = [c for c in data if c["code"].upper() in want or
+                            c.get("country_code", "").upper() in want]
+              available = {c["code"].upper() for c in data} | {
+                  c.get("country_code", "").upper() for c in data}
+              missing = want - available
               if missing:
                   print(f"::warning::کد ناشناخته: {sorted(missing)}", file=sys.stderr)
 
@@ -122,7 +125,7 @@ jobs:
               code = c["code"].upper()
               
               # اگر Force فعال باشد (برای این کشور یا همه)، بدون شرط اضافه کن
-              if force_all or code in force_list:
+              if force_all or code in force_list or c.get("country_code", "").upper() in force_list:
                   sel.append(c)
                   continue
               
@@ -140,27 +143,16 @@ jobs:
               # چاپ در stderr تا وارد GITHUB_OUTPUT نشود و ارور ندهد
               print(f"ℹ️ رد شده (قبلا ساخته شده): {', '.join(skipped)}", file=sys.stderr)
 
-          # 3. بسط دادن US به مناطق
-          US_REGIONS = [
-              {"code": "US-NE", "name_fa": "ایالات متحده - شمال شرق", "name_en": "United States - Northeast", "pbf_url": "https://download.geofabrik.de/north-america/us-northeast-latest.osm.pbf"},
-              {"code": "US-MW", "name_fa": "ایالات متحده - غرب میانه", "name_en": "United States - Midwest", "pbf_url": "https://download.geofabrik.de/north-america/us-midwest-latest.osm.pbf"},
-              {"code": "US-SO", "name_fa": "ایالات متحده - جنوب", "name_en": "United States - South", "pbf_url": "https://download.geofabrik.de/north-america/us-south-latest.osm.pbf"},
-              {"code": "US-WE", "name_fa": "ایالات متحده - غرب", "name_en": "United States - West", "pbf_url": "https://download.geofabrik.de/north-america/us-west-latest.osm.pbf"},
-              {"code": "US-PA", "name_fa": "ایالات متحده - آلاسکا و هاوایی", "name_en": "United States - Pacific (Alaska & Hawaii)", "pbf_url": "https://download.geofabrik.de/north-america/us-pacific-latest.osm.pbf"},
-          ]
-          
-          expanded = []
-          for c in sel:
-              if c["code"].upper() == "US":
-                  expanded.extend(US_REGIONS)
-              else:
-                  expanded.append(c)
-          
-          sel = expanded
-          
           matrix = {"include": [
               {"code": c["code"], "name_fa": c["name_fa"], 
-               "name_en": c["name_en"], "pbf_url": c["pbf_url"]} for c in sel]}
+               "name_en": c["name_en"], "pbf_url": c["pbf_url"],
+               "country_code": c.get("country_code", c["code"][:2]),
+               "country_name_fa": c.get("country_name_fa", c["name_fa"]),
+               "country_name_en": c.get("country_name_en", c["name_en"]),
+               "region_name_fa": c.get("region_name_fa", c["name_fa"]),
+               "region_name_en": c.get("region_name_en", c["name_en"]),
+               "group_order": c.get("group_order", 0),
+               "max_zoom": c.get("render_max_zoom", 12)} for c in sel]}
                
           print("matrix=" + json.dumps(matrix, ensure_ascii=False))
           print("count=" + str(len(sel)))
@@ -176,11 +168,11 @@ jobs:
     needs: plan
     if: needs.plan.outputs.count != '0'
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 240
     
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 6
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
 
     steps:
@@ -189,6 +181,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: server_map_builder/requirements-renderer.txt
 
       - name: نصب وابستگی‌ها
         run: |
@@ -198,7 +192,7 @@ jobs:
           # برای این سه وابستگی استفاده می‌شوند تا مرحله قابل‌پیش‌بینی بماند.
           timeout 5m python3 -m pip install --disable-pip-version-check --upgrade pip
           timeout 12m python3 -m pip install --disable-pip-version-check \
-            --only-binary=:all: osmium zstandard Pillow
+            --only-binary=:all: -r requirements-renderer.txt
 
       - name: آزادسازی فضای دیسک
         run: |
@@ -256,7 +250,8 @@ jobs:
       - name: رندر کامل کاشی‌های نقشه روی سرور
         run: |
           python3 tools/rendered_tile_builder.py "src/${{ matrix.code }}.osm.pbf" \
-            --code "${{ matrix.code }}" --out-dir out --min-zoom 5 --max-zoom 13 --target-mb 260
+            --code "${{ matrix.code }}" --out-dir out --min-zoom 5 --max-zoom "${{ matrix.max_zoom }}" \
+            --target-mb 260 --workers 2 --webp-method 3 --max-open-tiles 256
           ls -lh "out/${{ matrix.code }}.amap" "out/rendered-${{ matrix.code }}.json"
 
       - name: ادغام اطلس آماده در فایل ABM همان کشور
@@ -299,6 +294,12 @@ jobs:
             --code "${{ matrix.code }}" \
             --name-fa "${{ matrix.name_fa }}" \
             --name-en "${{ matrix.name_en }}" \
+            --country-code "${{ matrix.country_code }}" \
+            --country-name-fa "${{ matrix.country_name_fa }}" \
+            --country-name-en "${{ matrix.country_name_en }}" \
+            --region-name-fa "${{ matrix.region_name_fa }}" \
+            --region-name-en "${{ matrix.region_name_en }}" \
+            --group-order "${{ matrix.group_order }}" \
             --out-dir out \
             --release-tag "${RELEASE_TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
