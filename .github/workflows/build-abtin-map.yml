@@ -158,7 +158,7 @@ jobs:
                "region_name_fa": c.get("region_name_fa", c["name_fa"]),
                "region_name_en": c.get("region_name_en", c["name_en"]),
                "group_order": c.get("group_order", 0),
-               "max_zoom": c.get("render_max_zoom", 16)} for c in sel]}
+               "max_zoom": c.get("render_max_zoom", 14)} for c in sel]}
                
           print("matrix=" + json.dumps(matrix, ensure_ascii=False))
           print("count=" + str(len(sel)))
