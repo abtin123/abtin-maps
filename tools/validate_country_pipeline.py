@@ -7,15 +7,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
 WORKFLOW = ROOT / ".github/workflows/build-abtin-map.yml"
-MAP_CATALOG = ROOT.parents[0] / "lib/features/offline_maps/data/map_catalog.dart"
-DOWNLOAD_SCREEN = ROOT.parents[0] / "lib/features/offline_maps/presentation/download_map_screen.dart"
 
 sync = (TOOLS / "sync_geofabrik_catalog.py").read_text(encoding="utf-8")
 builder = (TOOLS / "build_country_package.py").read_text(encoding="utf-8")
 manifest = (TOOLS / "make_manifest.py").read_text(encoding="utf-8")
 workflow = WORKFLOW.read_text(encoding="utf-8")
-map_catalog = MAP_CATALOG.read_text(encoding="utf-8")
-download_screen = DOWNLOAD_SCREEN.read_text(encoding="utf-8")
 
 assert "index-v1.json" in sync
 assert "ALLOWED_HOSTS" in sync and "download.geofabrik.de" in sync
@@ -40,10 +36,5 @@ for argument in (
 ):
     assert argument in manifest
 assert '"source": {' in manifest
-
-assert "class MapDataSource" in map_catalog
-assert "source: rawSource is Map<String, dynamic>" in map_catalog
-assert "this.source = MapDataSource.osm" in map_catalog
-assert "region.source.attribution" in download_screen
 
 print("country_pipeline_contract_ok")

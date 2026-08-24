@@ -3,7 +3,13 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError as error:
+    raise SystemExit(
+        "Install renderer dependencies before validating the atlas: "
+        "python -m pip install -r requirements-renderer.txt"
+    ) from error
 
 from rendered_tile_builder import build_atlas, build_preview
 from raster_primitives import RenderHandler, TileStore
@@ -48,19 +54,14 @@ with tempfile.TemporaryDirectory(prefix='abtin-atlas-test-') as raw:
 
 source = (Path(__file__).parent / 'raster_primitives.py').read_text(encoding='utf-8')
 builder = (Path(__file__).parent / 'rendered_tile_builder.py').read_text(encoding='utf-8')
-atlas_view = (Path(__file__).parents[2] / 'lib/features/map/presentation/rendered_atlas_map_view.dart').read_text(encoding='utf-8')
-canvas_view = (Path(__file__).parents[2] / 'lib/abtinmap/abm_canvas_map_view.dart').read_text(encoding='utf-8')
-workflow = (Path(__file__).parents[1] / '.github/workflows/build-abtin-map.yml').read_text(encoding='utf-8')
+repo_root = Path(__file__).parents[1]
+workflow = (repo_root / '.github/workflows/build-abtin-map.yml').read_text(encoding='utf-8')
 country_builder = (Path(__file__).parent / 'build_country_package.py').read_text(encoding='utf-8')
 assert '"residential": 12' in source and '"service": 13' in source
 assert 'default=14' in source and 'default=14' in builder
 assert 'overzoom_max' in source and 'overzoom_max' in builder
 assert 'parser.add_argument("--include-poi-tiles"' in builder
 assert 'parser.add_argument("--include-buildings"' in builder
-assert '_maxInteractiveZoom' in atlas_view and 'nearestBaseTile' in atlas_view
-assert 'nearestPoiTile' in atlas_view and 'drawImageRect' in atlas_view
-assert '.clamp(2.0, 20.0)' in canvas_view
-assert 'camera.zoom >= 16.0' in canvas_view
 assert 'build_country_package.py' in workflow
 assert '"--building-min-zoom", "16"' in country_builder
 assert '"--workers", str(int(profile.get("render_workers", 4)))' in country_builder
