@@ -1,0 +1,385 @@
+name: Build Abtin Map (resumable checkpoints)
+
+on:
+  workflow_dispatch:
+    inputs:
+      countries:
+        description: 'کد کشورها با کاما؛ حداکثر 15 کشور در هر اجرا، مثلاً IR,TR,IQ'
+        required: true
+        default: 'IR'
+      release_tag:
+        description: 'تگ ریلیز مقصد'
+        required: true
+        default: 'maps-v3'
+
+permissions:
+  contents: write
+
+# همهٔ مرحله‌ها، حتی برای کشورهای متفاوت، ترتیبی‌اند. در نتیجه در کل workflow
+# هر لحظه فقط یک renderer و فقط یک worker WebP فعال است.
+concurrency:
+  group: abtin-map-build-checkpointed
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag }}
+  CHECKPOINT_TAG: map-checkpoints-v1
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      country_matrix: ${{ steps.matrix.outputs.country_matrix }}
+      stage_matrix: ${{ steps.matrix.outputs.stage_matrix }}
+      country_count: ${{ steps.matrix.outputs.country_count }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: ساخت catalog رسمی Geofabrik
+        run: |
+          python3 tools/sync_geofabrik_catalog.py \
+            --curated tools/countries.json \
+            --out tools/countries.resolved.json
+
+      - name: ساخت ماتریس کشورها و 16 checkpoint هر کشور
+        id: matrix
+        env:
+          REQUESTED_COUNTRIES: ${{ inputs.countries }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import sys
+
+          requested = (os.environ.get('REQUESTED_COUNTRIES') or '').strip()
+          want = [item.strip().upper() for item in requested.split(',') if item.strip()]
+          if not want:
+              raise SystemExit('حداقل یک کد کشور لازم است')
+          if any(item == 'ALL' for item in want):
+              raise SystemExit('برای جلوگیری از عبور از سقف 256 job، کشورها را حداکثر 15 تایی وارد کنید؛ all مجاز نیست.')
+          data = json.load(open('tools/countries.resolved.json', encoding='utf-8'))['countries']
+          by_code = {str(item['code']).upper(): item for item in data}
+          missing = [item for item in want if item not in by_code]
+          if missing:
+              raise SystemExit(f'کد ناشناخته: {", ".join(missing)}')
+          selected = []
+          seen = set()
+          for code in want:
+              if code not in seen:
+                  selected.append(by_code[code])
+                  seen.add(code)
+          if len(selected) > 15:
+              raise SystemExit('در هر اجرا حداکثر 15 کشور مجاز است؛ فهرست را به چند اجرای جدا تقسیم کنید.')
+          countries = []
+          stages = []
+          for country in selected:
+              base = {
+                  'code': country['code'],
+                  'name_fa': country['name_fa'],
+                  'name_en': country['name_en'],
+                  'pbf_url': country['pbf_url'],
+                  'country_code': country.get('country_code', country['code'][:2]),
+                  'country_name_fa': country.get('country_name_fa', country['name_fa']),
+                  'country_name_en': country.get('country_name_en', country['name_en']),
+                  'region_name_fa': country.get('region_name_fa', country['name_fa']),
+                  'region_name_en': country.get('region_name_en', country['name_en']),
+                  'group_order': int(country.get('group_order', 0)),
+              }
+              countries.append(base)
+              for row in range(4):
+                  for col in range(4):
+                      stages.append({**base, 'stage': f'R{row:02d}C{col:02d}'})
+          print('country_matrix=' + json.dumps({'include': countries}, ensure_ascii=False))
+          print('stage_matrix=' + json.dumps({'include': stages}, ensure_ascii=False))
+          print('country_count=' + str(len(countries)))
+          PY
+
+      - name: خلاصهٔ برنامهٔ ساخت
+        run: |
+          echo '### ساخت checkpoint‌دار' >> "$GITHUB_STEP_SUMMARY"
+          echo "کشورها: **${{ steps.matrix.outputs.country_count }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo 'برای هر کشور 16 stage با یک renderer و یک worker WebP اجرا می‌شود.' >> "$GITHUB_STEP_SUMMARY"
+
+  render_checkpoint:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      # این مقدار عمداً یک است: هیچ دو stage‌ای به شکل هم‌زمان رندر نمی‌شوند.
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.stage_matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements-renderer.txt
+
+      - name: نصب وابستگی‌ها و ابزار برش PBF
+        run: |
+          timeout 5m python3 -m pip install --disable-pip-version-check --upgrade pip
+          timeout 12m python3 -m pip install --disable-pip-version-check --only-binary=:all: -r requirements-renderer.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends osmium-tool
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
+          df -h /
+
+      - name: ساخت catalog همان کشور
+        run: |
+          python3 tools/sync_geofabrik_catalog.py \
+            --curated tools/countries.json \
+            --only '${{ matrix.code }}' \
+            --out countries.resolved.json
+
+      - name: بازیابی checkpoint کامل از ریلیز داخلی
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p checkpoints
+          gh release download "${CHECKPOINT_TAG}" \
+            --pattern '${{ matrix.code }}-${{ matrix.stage }}.tar' \
+            --dir resume
+          tar -xf "resume/${{ matrix.code }}-${{ matrix.stage }}.tar" -C checkpoints
+
+      - name: رندر یک stage و ثبت checkpoint (${{ matrix.code }} / ${{ matrix.stage }})
+        run: |
+          set -euo pipefail
+          python3 tools/checkpoint_render.py \
+            --catalog countries.resolved.json \
+            --code '${{ matrix.code }}' \
+            --stage '${{ matrix.stage }}' \
+            --checkpoint-dir checkpoints \
+            --source-dir src \
+            --out-dir out
+          test -f "checkpoints/${{ matrix.code }}/stages/${{ matrix.stage }}/complete.json"
+          tar -C checkpoints -cf '${{ matrix.code }}-${{ matrix.stage }}.tar' \
+            '${{ matrix.code }}/stages/${{ matrix.stage }}'
+
+      - name: ذخیرهٔ checkpoint در ریلیز داخلی
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${CHECKPOINT_TAG}" \
+            --title 'Abtin Maps internal checkpoints' \
+            --notes 'Checkpointهای قابل‌بازیابی؛ برای نصب کاربر نیستند.' || true
+          gh release upload "${CHECKPOINT_TAG}" \
+            '${{ matrix.code }}-${{ matrix.stage }}.tar' --clobber
+
+      - name: گزارش منابع stage
+        if: always()
+        run: |
+          echo '### منابع runner' >> "$GITHUB_STEP_SUMMARY"
+          free -h | tee -a "$GITHUB_STEP_SUMMARY"
+          df -h / | tee -a "$GITHUB_STEP_SUMMARY"
+
+  assemble_country:
+    needs: [plan, render_checkpoint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.country_matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements-renderer.txt
+
+      - name: نصب وابستگی‌ها
+        run: |
+          timeout 5m python3 -m pip install --disable-pip-version-check --upgrade pip
+          timeout 12m python3 -m pip install --disable-pip-version-check --only-binary=:all: -r requirements-renderer.txt
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
+          df -h /
+
+      - name: ساخت catalog همان کشور
+        run: |
+          python3 tools/sync_geofabrik_catalog.py \
+            --curated tools/countries.json \
+            --only '${{ matrix.code }}' \
+            --out countries.resolved.json
+
+      - name: دریافت 16 checkpoint کامل
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p resume checkpoints
+          gh release download "${CHECKPOINT_TAG}" --pattern '${{ matrix.code }}-R??C??.tar' --dir resume
+          count=$(find resume -name '${{ matrix.code }}-R??C??.tar' -type f | wc -l)
+          test "$count" -eq 16
+          for checkpoint in resume/*.tar; do
+            tar -xf "$checkpoint" -C checkpoints
+          done
+
+      - name: ادغام checkpointها به atlas نهایی
+        run: |
+          python3 tools/checkpoint_render.py \
+            --catalog countries.resolved.json \
+            --code '${{ matrix.code }}' \
+            --checkpoint-dir checkpoints \
+            --out-dir atlas \
+            --merge
+          test -s 'atlas/${{ matrix.code }}.amap'
+          test -s 'atlas/rendered-${{ matrix.code }}.json'
+
+      - name: ساخت ABM با atlas آماده، بدون رندر مجدد
+        run: |
+          python3 tools/build_country_package.py \
+            --catalog countries.resolved.json \
+            --code '${{ matrix.code }}' \
+            --out-dir out --source-dir src \
+            --prebuilt-atlas 'atlas/${{ matrix.code }}.amap' \
+            --release-tag "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}"
+          python3 tools/abtinmap_inspect.py 'out/${{ matrix.code }}.abm'
+
+      - name: دریافت نسخهٔ قبلی و ساخت پچ افزایشی
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p prev
+          gh release download "${RELEASE_TAG}" --pattern '${{ matrix.code }}.abm' --dir prev || true
+          if [ -s 'prev/${{ matrix.code }}.abm' ]; then
+            python3 tools/abtinmap_diff.py \
+              'prev/${{ matrix.code }}.abm' 'out/${{ matrix.code }}.abm' \
+              --code '${{ matrix.code }}' --out-dir out
+          fi
+
+      - name: ساخت manifest نهایی و تکه‌کردن فایل در صورت لزوم
+        run: |
+          PATCH_ARG=''
+          if [ -f 'out/patch-${{ matrix.code }}.json' ]; then
+            PATCH_ARG='--patch-json out/patch-${{ matrix.code }}.json'
+          fi
+          python3 tools/make_manifest.py 'out/${{ matrix.code }}.abm' \
+            --code '${{ matrix.code }}' \
+            --name-fa '${{ matrix.name_fa }}' \
+            --name-en '${{ matrix.name_en }}' \
+            --country-code '${{ matrix.country_code }}' \
+            --country-name-fa '${{ matrix.country_name_fa }}' \
+            --country-name-en '${{ matrix.country_name_en }}' \
+            --region-name-fa '${{ matrix.region_name_fa }}' \
+            --region-name-en '${{ matrix.region_name_en }}' \
+            --group-order '${{ matrix.group_order }}' \
+            --out-dir out \
+            --release-tag "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --rendered-meta 'atlas/rendered-${{ matrix.code }}.json' \
+            --source-url '${{ matrix.pbf_url }}' \
+            --source-provider 'Geofabrik / OpenStreetMap' \
+            --source-attribution 'Map data from OpenStreetMap, ODbL 1.0' \
+            --source-license-url 'https://opendatacommons.org/licenses/odbl/1.0/' \
+            --source-copyright-url 'https://www.openstreetmap.org/copyright' \
+            $PATCH_ARG
+          if [ -f 'out/${{ matrix.code }}.abm.part0' ]; then
+            rm -f 'out/${{ matrix.code }}.abm'
+          fi
+
+      - name: بارگذاری خروجی کشور برای job انتشار
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-${{ matrix.code }}
+          path: out/*
+          retention-days: 3
+          compression-level: 0
+
+      - name: بارگذاری وضعیت رشته‌ها
+        uses: actions/upload-artifact@v4
+        with:
+          name: string-state-${{ matrix.code }}
+          path: tools/string_state/${{ matrix.code }}.json
+          if-no-files-found: ignore
+          retention-days: 3
+
+  release:
+    needs: [plan, assemble_country]
+    runs-on: ubuntu-latest
+    if: needs.plan.outputs.country_count != '0' && needs.assemble_country.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: دریافت خروجی همهٔ کشورها
+        uses: actions/download-artifact@v5
+        with:
+          path: merged
+          pattern: map-*
+
+      - name: دریافت manifest قبلی برای حفظ سایر کشورها
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p merged/prev-manifest
+          if gh release download "${RELEASE_TAG}" --pattern manifest.json --dir previous; then
+            python3 - <<'PY'
+            import json
+            from pathlib import Path
+            prior = json.loads(Path('previous/manifest.json').read_text(encoding='utf-8'))
+            root = Path('merged/prev-manifest')
+            root.mkdir(parents=True, exist_ok=True)
+            for country in prior.get('countries', []):
+                (root / f"manifest-{country['code']}.json").write_text(
+                    json.dumps(country, ensure_ascii=False, indent=2), encoding='utf-8')
+            PY
+          fi
+
+      - name: ادغام manifestها و آماده‌سازی assets
+        run: |
+          mkdir -p out
+          python3 tools/merge_manifests.py \
+            --in-dir merged --out out/manifest.json --release-tag "${RELEASE_TAG}"
+          find merged -type f \( -name '*.abm' -o -name '*.abm.part*' -o -name '*.abmpatch' -o -name 'patch-*.json' \) \
+            -exec mv -t out/ {} +
+          ls -lh out/
+
+      - name: انتشار atomically در GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${RELEASE_TAG}" \
+            --title "Abtin Maps ${RELEASE_TAG}" \
+            --notes 'نقشه‌های آفلاین ABTINMAP؛ ساخته‌شده با checkpoint قابل‌بازیابی.' || true
+          gh release upload "${RELEASE_TAG}" out/* --clobber
+
+      - name: ثبت وضعیت رشته‌ها در repository
+        uses: actions/download-artifact@v5
+        continue-on-error: true
+        with:
+          path: string-state-merged
+          pattern: string-state-*
+          merge-multiple: true
+
+      - name: commit وضعیت رشته‌ها
+        run: |
+          if [ -n "$(find string-state-merged -type f -name '*.json' -print -quit 2>/dev/null)" ]; then
+            mkdir -p tools/string_state
+            cp string-state-merged/*.json tools/string_state/
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add tools/string_state/
+            git diff --staged --quiet || (git commit -m 'chore: update map string state' && git push)
+          fi
+
+      - name: خلاصهٔ انتشار
+        run: |
+          echo "### انتشار ${RELEASE_TAG} کامل شد" >> "$GITHUB_STEP_SUMMARY"
+          python3 -c "import json; m=json.load(open('out/manifest.json', encoding='utf-8')); print(f'کشورهای موجود در manifest: {len(m[\"countries\"])}')" >> "$GITHUB_STEP_SUMMARY"
