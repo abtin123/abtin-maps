@@ -1,37 +1,49 @@
-name: Delete Repo Files
+name: Delete Everything Except Workflows
 
 on:
   workflow_dispatch:
-    inputs:
-      paths:
-        description: 'مسیر فایل‌ها/پوشه‌ها برای حذف (با کاما جدا کن)'
-        required: true
-        type: string
-      commit_message:
-        description: 'پیام کامیت'
-        required: false
-        default: 'chore: delete files'
+
+permissions:
+  contents: write
 
 jobs:
-  delete-files:
+  cleanup:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
 
-      - name: Delete specified files
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete everything except workflows
         run: |
-          IFS=',' read -ra PATHS <<< "${{ github.event.inputs.paths }}"
-          for p in "${PATHS[@]}"; do
-            trimmed=$(echo "$p" | xargs)
-            echo "Deleting: $trimmed"
-            rm -rf "$trimmed"
+          set -e
+
+          shopt -s dotglob nullglob
+
+          for item in *; do
+            if [[ "$item" != ".git" && "$item" != ".github" ]]; then
+              rm -rf -- "$item"
+            fi
           done
 
-      - name: Commit and push
+          if [ -d ".github" ]; then
+            find .github -mindepth 1 -maxdepth 1 ! -name "workflows" -exec rm -rf {} +
+          fi
+
+          find .github/workflows -type f -print
+
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add -A
-          git commit -m "${{ github.event.inputs.commit_message }}" || echo "چیزی برای کامیت نبود"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "Nothing to delete."
+          else
+            git commit -m "Delete all repository files except workflows"
+            git push
+          fi
