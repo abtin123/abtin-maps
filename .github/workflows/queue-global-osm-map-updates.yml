@@ -15,10 +15,13 @@ on:
         description: 'Release نهایی موجود که باید فقط update شود'
         required: true
         default: 'maps-v3'
+      recover_active:
+        description: 'batch فعال صف موجود را دوباره شروع کن؛ state پاک یا دوباره ساخته نمی‌شود'
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: '17 3 * * 0'
-  repository_dispatch:
-    types: [plan-global-map-queue]
 
 permissions:
   contents: write
@@ -29,8 +32,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.release_tag || inputs.release_tag || 'maps-v3' }}
-  RUN_MODE: ${{ github.event_name == 'schedule' && 'weekly' || github.event_name == 'repository_dispatch' && github.event.client_payload.mode || inputs.mode }}
+  RELEASE_TAG: ${{ inputs.release_tag || 'maps-v3' }}
+  RUN_MODE: ${{ github.event_name == 'schedule' && 'weekly' || inputs.mode }}
+  RECOVER_ACTIVE: ${{ inputs.recover_active || 'false' }}
 
 jobs:
   queue:
@@ -114,25 +118,38 @@ jobs:
             sleep "${attempt}"
           done
 
-      - name: شروع اولین batch صف
-        if: steps.new_queue.outputs.has_active == 'true'
+      - name: شروع batch جدید یا بازیابی batch فعال
+        if: steps.new_queue.outputs.has_active == 'true' || (steps.existing.outputs.has_active == 'true' && env.RECOVER_ACTIVE == 'true')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          jq -nc \
-            --arg countries "${{ steps.new_queue.outputs.countries }}" \
+          output="$(python3 tools/map_build_queue.py --emit-active)"
+          echo "${output}"
+          test "$(sed -n 's/^has_active=//p' <<<"${output}")" = 'true'
+          countries="$(sed -n 's/^countries=//p' <<<"${output}")"
+          queue_id="$(sed -n 's/^queue_id=//p' <<<"${output}")"
+          payload="$(jq -nc \
+            --arg ref "${GITHUB_REF_NAME}" \
+            --arg countries "${countries}" \
             --arg release_tag "${RELEASE_TAG}" \
-            --arg queue_id "${{ steps.new_queue.outputs.queue_id }}" \
-            '{event_type:"start-map-batch",client_payload:{countries:$countries,release_tag:$release_tag,queue_id:$queue_id}}' \
-            | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
+            --arg queue_id "${queue_id}" \
+            '{ref:$ref,inputs:{countries:$countries,release_tag:$release_tag,queue_id:$queue_id}}')"
+          curl --fail-with-body --silent --show-error --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/build-abtin-map.yml/dispatches" \
+            --data "${payload}"
 
       - name: خلاصه
         run: |
           echo "### صف نقشهٔ OSM" >> "$GITHUB_STEP_SUMMARY"
           echo "mode: **${RUN_MODE}**" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ steps.existing.outputs.has_active }}" = 'true' ]; then
-            echo 'یک صف قبلی فعال بود؛ این اجرا تغییری ایجاد نکرد.' >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.existing.outputs.has_active }}" = 'true' ] && [ "${RECOVER_ACTIVE}" = 'true' ]; then
+            echo 'batch فعال صف موجود دوباره شروع شد؛ state حفظ شده است.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.existing.outputs.has_active }}" = 'true' ]; then
+            echo 'یک صف قبلی فعال بود؛ state حفظ شد و build جدید شروع نشد.' >> "$GITHUB_STEP_SUMMARY"
           elif [ "${{ steps.new_queue.outputs.has_active }}" = 'true' ]; then
             echo "اولین batch: \`${{ steps.new_queue.outputs.countries }}\`" >> "$GITHUB_STEP_SUMMARY"
           else
