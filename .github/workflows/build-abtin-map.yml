@@ -20,17 +20,12 @@ permissions:
   contents: write
   actions: write
 
-# همهٔ مرحله‌ها، حتی برای کشورهای متفاوت، ترتیبی‌اند. در نتیجه در کل workflow
-# هر لحظه فقط یک renderer و فقط یک worker WebP فعال است.
 concurrency:
   group: abtin-map-build-checkpointed
   cancel-in-progress: false
 
 env:
-  # Release نهایی برای تمام کشورها ثابت می‌ماند و در هر batch فقط update می‌شود.
   RELEASE_TAG: ${{ inputs.release_tag }}
-  # checkpointهای هر کشور Release مستقل دارند: 16 asset برای هر کشور، نه 1600
-  # asset در یک Release جهانی. IR قدیمی یک‌بار از tag v1 بازیابی می‌شود.
   CHECKPOINT_TAG_PREFIX: map-checkpoints-v2
   LEGACY_CHECKPOINT_TAG: map-checkpoints-v1
   PYTHONUNBUFFERED: '1'
@@ -120,7 +115,6 @@ jobs:
     timeout-minutes: 350
     strategy:
       fail-fast: false
-      # این مقدار عمداً یک است: هیچ دو stage‌ای به شکل هم‌زمان رندر نمی‌شوند.
       max-parallel: 1
       matrix: ${{ fromJSON(needs.plan.outputs.stage_matrix) }}
 
@@ -157,8 +151,6 @@ jobs:
           set -euo pipefail
           mkdir -p checkpoints resume
           asset='${{ matrix.code }}-${{ matrix.stage }}.tar'
-          # در اجرای بعدی فقط همان stage لازم دانلود می‌شود؛ اگر Release v2 برای
-          # کشور هنوز ایجاد نشده باشد، IR یک‌بار از checkpointهای قدیمی v1 مهاجرت می‌کند.
           if ! gh release download "${CHECKPOINT_TAG}" --pattern "${asset}" --dir resume; then
             if [ '${{ matrix.code }}' = 'IR' ]; then
               gh release download "${LEGACY_CHECKPOINT_TAG}" --pattern "${asset}" --dir resume || true
@@ -391,8 +383,6 @@ jobs:
               --title "Abtin Maps ${RELEASE_TAG}" \
               --notes 'نقشه‌های آفلاین ABTINMAP؛ ساخته‌شده با checkpoint قابل‌بازیابی.'
           fi
-          # اگر maps-v3 از قبل وجود دارد، فقط assetهای همین batch و manifest
-          # جایگزین می‌شوند؛ assetهای کشورهایی که در این batch نیستند باقی می‌مانند.
           gh release upload "${RELEASE_TAG}" out/* --clobber
 
       - name: دریافت وضعیت رشته‌های کشورها
@@ -456,8 +446,6 @@ jobs:
           output="$(python3 tools/map_build_queue.py --complete --queue-id '${{ inputs.queue_id }}')"
           echo "${output}"
           cp tools/map_build_queue.json /tmp/map_build_queue_next.json
-          # قبل از dispatch، active batch جدید را commit می‌کنیم؛ در غیر این
-          # صورت checkout اجرای بعدی می‌تواند همان batch قبلی را تکرار کند.
           for attempt in 1 2 3; do
             git fetch origin "${GITHUB_REF_NAME}"
             git reset --hard "origin/${GITHUB_REF_NAME}"

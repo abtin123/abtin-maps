@@ -16,7 +16,6 @@ on:
         required: true
         default: 'maps-v3'
   schedule:
-    # یک‌شنبه ساعت 03:17 UTC؛ کمی خارج از دقیقه‌های پرترافیک Actions.
     - cron: '17 3 * * 0'
 
 permissions:
