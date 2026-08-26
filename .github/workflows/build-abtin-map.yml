@@ -15,6 +15,8 @@ on:
         description: 'شناسهٔ صف خودکار؛ برای اجرای دستی خالی بماند'
         required: false
         default: ''
+  repository_dispatch:
+    types: [start-map-batch]
 
 permissions:
   contents: write
@@ -25,13 +27,29 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: ${{ inputs.release_tag }}
+  RELEASE_TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.release_tag || inputs.release_tag }}
+  QUEUE_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.queue_id || inputs.queue_id }}
   CHECKPOINT_TAG_PREFIX: map-checkpoints-v2
   LEGACY_CHECKPOINT_TAG: map-checkpoints-v1
   PYTHONUNBUFFERED: '1'
 
 jobs:
+  redirect_all_to_queue:
+    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.countries == 'ALL' || inputs.countries == 'All' || inputs.countries == 'all') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: شروع صف سراسری
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          jq -nc \
+            --arg release_tag "${{ inputs.release_tag }}" \
+            '{event_type:"plan-global-map-queue",client_payload:{mode:"initial",release_tag:$release_tag}}' \
+            | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
+
   plan:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && (inputs.countries == 'ALL' || inputs.countries == 'All' || inputs.countries == 'all')) }}
     runs-on: ubuntu-latest
     outputs:
       country_matrix: ${{ steps.matrix.outputs.country_matrix }}
@@ -53,7 +71,7 @@ jobs:
       - name: ساخت ماتریس کشورها و 16 checkpoint هر کشور
         id: matrix
         env:
-          REQUESTED_COUNTRIES: ${{ inputs.countries }}
+          REQUESTED_COUNTRIES: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.countries || inputs.countries }}
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
@@ -438,12 +456,12 @@ jobs:
           exit 1
 
       - name: پیش‌برد صف و شروع batch بعدی
-        if: ${{ inputs.queue_id != '' }}
+        if: ${{ env.QUEUE_ID != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          output="$(python3 tools/map_build_queue.py --complete --queue-id '${{ inputs.queue_id }}')"
+          output="$(python3 tools/map_build_queue.py --complete --queue-id "${QUEUE_ID}")"
           echo "${output}"
           cp tools/map_build_queue.json /tmp/map_build_queue_next.json
           for attempt in 1 2 3; do
@@ -465,11 +483,12 @@ jobs:
           if grep -q '^has_active=true$' <<<"${output}"; then
             next_countries="$(sed -n 's/^countries=//p' <<<"${output}")"
             next_queue_id="$(sed -n 's/^queue_id=//p' <<<"${output}")"
-            gh workflow run build-abtin-map.yml \
-              --ref "${GITHUB_REF_NAME}" \
-              -f countries="${next_countries}" \
-              -f release_tag="${RELEASE_TAG}" \
-              -f queue_id="${next_queue_id}"
+            jq -nc \
+              --arg countries "${next_countries}" \
+              --arg release_tag "${RELEASE_TAG}" \
+              --arg queue_id "${next_queue_id}" \
+              '{event_type:"start-map-batch",client_payload:{countries:$countries,release_tag:$release_tag,queue_id:$queue_id}}' \
+              | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
           fi
 
       - name: خلاصهٔ انتشار

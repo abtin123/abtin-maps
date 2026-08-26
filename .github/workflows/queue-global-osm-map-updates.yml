@@ -17,6 +17,8 @@ on:
         default: 'maps-v3'
   schedule:
     - cron: '17 3 * * 0'
+  repository_dispatch:
+    types: [plan-global-map-queue]
 
 permissions:
   contents: write
@@ -27,8 +29,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: ${{ inputs.release_tag || 'maps-v3' }}
-  RUN_MODE: ${{ github.event_name == 'schedule' && 'weekly' || inputs.mode }}
+  RELEASE_TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.release_tag || inputs.release_tag || 'maps-v3' }}
+  RUN_MODE: ${{ github.event_name == 'schedule' && 'weekly' || github.event_name == 'repository_dispatch' && github.event.client_payload.mode || inputs.mode }}
 
 jobs:
   queue:
@@ -118,11 +120,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run build-abtin-map.yml \
-            --ref "${GITHUB_REF_NAME}" \
-            -f countries="${{ steps.new_queue.outputs.countries }}" \
-            -f release_tag="${RELEASE_TAG}" \
-            -f queue_id="${{ steps.new_queue.outputs.queue_id }}"
+          jq -nc \
+            --arg countries "${{ steps.new_queue.outputs.countries }}" \
+            --arg release_tag "${RELEASE_TAG}" \
+            --arg queue_id "${{ steps.new_queue.outputs.queue_id }}" \
+            '{event_type:"start-map-batch",client_payload:{countries:$countries,release_tag:$release_tag,queue_id:$queue_id}}' \
+            | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
 
       - name: خلاصه
         run: |
