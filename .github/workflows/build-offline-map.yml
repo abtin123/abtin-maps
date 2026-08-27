@@ -32,7 +32,7 @@ on:
       release_tag:
         description: 'Release tag holding map assets'
         required: true
-        default: 'maps-v4'
+        default: maps-v3
         type: string
 
 permissions:
