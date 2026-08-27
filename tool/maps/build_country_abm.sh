@@ -8,6 +8,8 @@ CODE="${1:?Usage: build_country_abm.sh CC <pbf-url-or-path> <output-directory>}"
 PBF_SOURCE="${2:?Usage: build_country_abm.sh CC <pbf-url-or-path> <output-directory>}"
 OUT_DIR="${3:?Usage: build_country_abm.sh CC <pbf-url-or-path> <output-directory>}"
 CODE="${CODE^^}"
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 WORK_DIR="${OUT_DIR}/work-${CODE}"
 ARCHIVE="${OUT_DIR}/${CODE}.abm"
 

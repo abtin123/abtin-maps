@@ -1,5 +1,7 @@
-# نصب آپدیت سازندهٔ نقشه
+# نصب patch اصلاح‌شدهٔ سازندهٔ نقشه
 
-کل محتویات این ZIP را در **ریشهٔ repository Flutter** خود extract کنید و فایل‌های هم‌نام را جایگزین کنید. ساختار مسیرها در ZIP دقیقاً همان ساختار repository است؛ بنابراین `tool/maps/README.fa.md` را باز کنید و فقط workflow `Build offline country map` را برای ساخت ایران اجرا کنید.
+کل محتویات ZIP را در ریشهٔ سورس Flutter خود extract و فایل‌های هم‌نام را جایگزین کنید. سپس commit و push کنید.
 
-خروجی ساخته‌شده فقط `IR.abm` خواهد بود. فایل PMTiles یا graph جداگانه منتشر نمی‌شود. ZIP هیچ نقشه، PBF، APK، cache یا کلید امضایی ندارد.
+در GitHub Actions، workflow **Build offline country map** را اجرا کنید. پیش‌فرض آن ایران (`IR`) و tag `maps-v3` است؛ app نیز از همین tag دانلود می‌کند. این نسخه خطای Docker مربوط به مسیر نسبی `dist/work-IR` را اصلاح می‌کند.
+
+خروجی فقط `IR.abm` و `manifest.json` در GitHub Release است. هیچ نقشه، APK، PBF، cache یا کلید خصوصی در ZIP نیست.
