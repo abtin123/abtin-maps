@@ -1,4 +1,0 @@
-osmium
-zstandard
-Pillow
-mapbox-vector-tile
