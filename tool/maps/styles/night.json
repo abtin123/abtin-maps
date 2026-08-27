@@ -1,0 +1,30 @@
+{
+  "version": 8,
+  "name": "Abtin Night",
+  "metadata": {
+    "abtin": {
+      "poi_layers": false,
+      "attribution": "© OpenStreetMap contributors, ODbL 1.0"
+    }
+  },
+  "sources": {
+    "abtin": {
+      "type": "vector",
+      "url": "__ABTIN_PMTILES_URI__"
+    }
+  },
+  "layers": [
+    {"id":"background","type":"background","paint":{"background-color":"#10161d"}},
+    {"id":"land-forest","type":"fill","source":"abtin","source-layer":"land","filter":["in","class","forest","wood","scrub"],"paint":{"fill-color":"#182b28"}},
+    {"id":"land-urban","type":"fill","source":"abtin","source-layer":"land","filter":["in","class","residential","commercial","industrial"],"paint":{"fill-color":"#202a32"}},
+    {"id":"land-other","type":"fill","source":"abtin","source-layer":"land","paint":{"fill-color":"#171f27"}},
+    {"id":"water-area","type":"fill","source":"abtin","source-layer":"water","paint":{"fill-color":"#17384a"}},
+    {"id":"water-line","type":"line","source":"abtin","source-layer":"water","paint":{"line-color":"#2d6682","line-width":["interpolate",["linear"],["zoom"],6,0.6,14,2.5]}},
+    {"id":"boundary","type":"line","source":"abtin","source-layer":"boundaries","paint":{"line-color":"#64717a","line-width":["interpolate",["linear"],["zoom"],4,0.6,12,1.5],"line-dasharray":[3,2]}},
+    {"id":"road-casing","type":"line","source":"abtin","source-layer":"roads","minzoom":5,"paint":{"line-color":"#0b1015","line-width":["interpolate",["linear"],["zoom"],5,1.3,8,2.8,10,4.8,12,7.5,14,12.5],"line-opacity":0.96}},
+    {"id":"road-fill","type":"line","source":"abtin","source-layer":"roads","minzoom":5,"paint":{"line-color":["match",["get","class"],"motorway","#e57354","trunk","#df8f50","primary","#d4a551","secondary","#bdb071","tertiary","#778997","residential","#53636f","unclassified","#53636f","service","#3e4a53","track","#655c4a","#53636f"],"line-width":["interpolate",["linear"],["zoom"],5,0.8,8,1.8,10,3.2,12,5.5,14,9.5]}},
+    {"id":"bridge-casing","type":"line","source":"abtin","source-layer":"roads","filter":["==",["get","bridge"],true],"paint":{"line-color":"#020405","line-width":["interpolate",["linear"],["zoom"],10,5,14,12]}},
+    {"id":"bridge-fill","type":"line","source":"abtin","source-layer":"roads","filter":["==",["get","bridge"],true],"paint":{"line-color":"#718292","line-width":["interpolate",["linear"],["zoom"],10,3,14,9]}},
+    {"id":"buildings","type":"fill","source":"abtin","source-layer":"buildings","minzoom":14,"paint":{"fill-color":"#253039","fill-outline-color":"#34414a"}}
+  ]
+}
