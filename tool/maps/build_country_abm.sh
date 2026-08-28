@@ -41,10 +41,32 @@ cp "$ROOT/tool/maps/styles/night.json" "$WORK_DIR/night.json"
 # MapLibre extracts only these small resources into its local cache; it never
 # downloads a second map, sprite, or font at runtime.
 mkdir -p "$WORK_DIR/resources/glyphs/Vazirmatn" "$WORK_DIR/resources/sprites"
-cp "$ROOT"/assets/glyphs/Vazirmatn/*.pbf "$WORK_DIR/resources/glyphs/Vazirmatn/"
-cp "$ROOT"/assets/sprites/abtin.json "$ROOT"/assets/sprites/abtin.png \
-  "$ROOT"/assets/sprites/abtin@2x.json "$ROOT"/assets/sprites/abtin@2x.png \
-  "$WORK_DIR/resources/sprites/"
+GLYPH_DIR="$WORK_DIR/resources/glyphs/Vazirmatn"
+GLYPH_RANGES=(
+  0-255 256-511 1536-1791 1792-2047 8192-8447
+  64256-64511 64512-64767 65024-65279 65280-65535
+)
+LOCAL_GLYPH_DIR="$ROOT/assets/glyphs/Vazirmatn"
+# The builder repository may omit app-only assets or contain only part of the
+# ranges. Fill each missing range from the public openmaptiles archive instead
+# of relying on a wildcard copy that fails when the directory is absent.
+GLYPH_BASE_URL='https://raw.githubusercontent.com/openmaptiles/fonts/gh-pages/Klokantech%20Noto%20Sans%20Regular'
+for range in "${GLYPH_RANGES[@]}"; do
+  if [[ -s "$LOCAL_GLYPH_DIR/${range}.pbf" ]]; then
+    cp "$LOCAL_GLYPH_DIR/${range}.pbf" "$GLYPH_DIR/${range}.pbf"
+  else
+    curl --fail --location --retry 4 --connect-timeout 30 --max-time 120 \
+      "$GLYPH_BASE_URL/${range}.pbf" -o "$GLYPH_DIR/${range}.pbf"
+  fi
+done
+SPRITE_DIR="$ROOT/assets/sprites"
+for sprite in abtin.json abtin.png abtin@2x.json abtin@2x.png; do
+  test -f "$SPRITE_DIR/$sprite" || {
+    echo "Missing required POI sprite: $SPRITE_DIR/$sprite" >&2
+    exit 2
+  }
+  cp "$SPRITE_DIR/$sprite" "$WORK_DIR/resources/sprites/"
+done
 resource_args=()
 for glyph in "$WORK_DIR"/resources/glyphs/Vazirmatn/*.pbf; do
   resource_args+=(--resource "glyphs/Vazirmatn/$(basename "$glyph")=$glyph")
