@@ -26,8 +26,28 @@ rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
+# Geofabrik occasionally returns 502/503 for tens of seconds to a few minutes
+# during overload; curl's built-in --retry (3 attempts, short backoff) is not
+# enough to ride that out, so we wrap it in our own retry loop with longer,
+# increasing waits before giving up.
+download_with_retry() {
+  local url="$1" dest="$2" max_attempts=8 attempt=1 wait=10
+  while (( attempt <= max_attempts )); do
+    if curl --fail --location --connect-timeout 30 --retry 3 --retry-all-errors \
+         "$url" -o "$dest"; then
+      return 0
+    fi
+    echo "Download attempt ${attempt}/${max_attempts} failed for $url; retrying in ${wait}s..." >&2
+    sleep "$wait"
+    attempt=$((attempt + 1))
+    wait=$(( wait * 2 > 120 ? 120 : wait * 2 ))
+  done
+  echo "Giving up after ${max_attempts} attempts: $url" >&2
+  return 1
+}
+
 if [[ "$PBF_SOURCE" =~ ^https?:// ]]; then
-  curl --fail --location --retry 3 --connect-timeout 30 "$PBF_SOURCE" -o "$WORK_DIR/input.osm.pbf"
+  download_with_retry "$PBF_SOURCE" "$WORK_DIR/input.osm.pbf"
 else
   test -f "$PBF_SOURCE"
   cp "$PBF_SOURCE" "$WORK_DIR/input.osm.pbf"
@@ -55,8 +75,7 @@ for range in "${GLYPH_RANGES[@]}"; do
   if [[ -s "$LOCAL_GLYPH_DIR/${range}.pbf" ]]; then
     cp "$LOCAL_GLYPH_DIR/${range}.pbf" "$GLYPH_DIR/${range}.pbf"
   else
-    curl --fail --location --retry 4 --connect-timeout 30 --max-time 120 \
-      "$GLYPH_BASE_URL/${range}.pbf" -o "$GLYPH_DIR/${range}.pbf"
+    download_with_retry "$GLYPH_BASE_URL/${range}.pbf" "$GLYPH_DIR/${range}.pbf"
   fi
 done
 SPRITE_DIR="$ROOT/assets/sprites"
