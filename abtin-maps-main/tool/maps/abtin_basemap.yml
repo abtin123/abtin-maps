@@ -1,0 +1,207 @@
+schema_name: Abtin Basemap
+schema_description: Lean vector basemap with road labels and searchable POIs for the Abtin one-file container.
+attribution: © OpenStreetMap contributors, ODbL 1.0
+version: 1.1.0
+is_overlay: false
+args:
+  osm_path:
+    description: Absolute OSM PBF input path.
+    default: /data/input.osm.pbf
+  minzoom: 2
+  maxzoom: 20
+  force: true
+sources:
+  osm:
+    type: osm
+    local_path: '${ args.osm_path }'
+definitions:
+  poi_filter: &poi_filter
+    amenity: [fuel, parking, bicycle_parking, hospital, clinic, doctors, pharmacy, police, school, college, university, kindergarten, restaurant, fast_food, food_court, cafe, ice_cream, bank, atm, place_of_worship, toilets, bus_station]
+    leisure: [park, garden, nature_reserve, pitch, sports_centre, stadium]
+    tourism: [hotel, motel, hostel, guest_house, apartment, attraction, museum, viewpoint, zoo, theme_park]
+    shop: [supermarket, convenience, department_store, mall, greengrocer]
+    highway: [bus_stop, speed_camera, traffic_signals]
+    aeroway: [aerodrome, airport]
+    historic: [monument, memorial, castle, archaeological_site]
+    traffic_calming: [bump, hump, table, cushion, chicane]
+    place: [city, town, village, suburb, neighbourhood, quarter, hamlet, locality]
+  poi_attributes: &poi_attributes
+    - key: class
+      value:
+        coalesce:
+          - tag_value: amenity
+          - tag_value: leisure
+          - tag_value: tourism
+          - tag_value: shop
+          - tag_value: highway
+          - tag_value: aeroway
+          - tag_value: historic
+          - tag_value: traffic_calming
+          - tag_value: place
+    - key: name
+      tag_value: name
+    - key: name_fa
+      tag_value: name:fa
+layers:
+  - id: land
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom:
+          default_value: 10
+          overrides:
+            2:
+              landuse: [forest, farmland]
+              natural: [wood, scrub]
+            5:
+              landuse: [forest, farmland]
+              natural: [wood, scrub]
+            7:
+              landuse: [residential, industrial, commercial]
+        include_when:
+          landuse: [allotments, cemetery, commercial, farmland, farmyard, forest, grass, industrial, meadow, orchard, residential, retail, vineyard]
+          natural: [beach, grassland, heath, sand, scrub, wood]
+        attributes:
+          - key: class
+            type: match_value
+  - id: water
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom:
+          default_value: 9
+          overrides:
+            2:
+              natural: water
+              waterway: riverbank
+              landuse: reservoir
+            4:
+              natural: water
+              waterway: riverbank
+              landuse: reservoir
+        include_when:
+          natural: water
+          waterway: [riverbank, dock]
+          landuse: [reservoir, basin]
+        attributes:
+          - key: class
+            type: match_value
+      - source: osm
+        geometry: line
+        min_zoom:
+          default_value: 10
+          overrides:
+            6:
+              waterway: river
+        include_when:
+          waterway: [river, canal, stream]
+        attributes:
+          - key: class
+            type: match_value
+  - id: buildings
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 14
+        include_when:
+          building: __any__
+        exclude_when:
+          building: [no, roof]
+  - id: boundaries
+    features:
+      - source: osm
+        geometry: line
+        min_zoom:
+          default_value: 7
+          overrides:
+            2:
+              admin_level: ['2']
+            3:
+              admin_level: '2'
+        include_when:
+          __all__:
+            - boundary: administrative
+              admin_level: ['2', '4']
+        attributes:
+          - key: admin_level
+            type: integer
+  - id: roads
+    features:
+      - source: osm
+        geometry: line
+        min_size: 0
+        min_zoom:
+          default_value: 13
+          overrides:
+            5:
+              highway: [motorway, motorway_link]
+            6:
+              highway: [trunk, trunk_link]
+            8:
+              highway: [primary, primary_link]
+            9:
+              highway: [secondary, secondary_link]
+            10:
+              highway: [tertiary, tertiary_link]
+            12:
+              highway: [unclassified, residential]
+        include_when:
+          highway: [motorway, motorway_link, trunk, trunk_link, primary, primary_link, secondary, secondary_link, tertiary, tertiary_link, unclassified, residential, living_street, service, track]
+        attributes:
+          - key: class
+            value: '${ match_value.replace("_link", "") }'
+          - key: name
+            tag_value: name
+          - key: name_fa
+            tag_value: name:fa
+          - key: link
+            value: true
+            include_when:
+              highway: [motorway_link, trunk_link, primary_link, secondary_link, tertiary_link]
+            else: false
+          - key: bridge
+            value: true
+            include_when:
+              bridge: __any__
+            else: false
+          - key: tunnel
+            value: true
+            include_when:
+              tunnel: __any__
+            else: false
+  - id: pois
+    features:
+      - source: osm
+        geometry: point
+        min_zoom:
+          default_value: 12
+          overrides:
+            11:
+              amenity: [hospital, bus_station]
+              aeroway: [aerodrome, airport]
+              place: [city, town]
+            12:
+              amenity: [fuel, pharmacy, police, bank, place_of_worship]
+              tourism: [hotel, attraction, museum]
+              leisure: [park, garden]
+        include_when: *poi_filter
+        exclude_when:
+          name: ''
+        attributes: *poi_attributes
+      - source: osm
+        geometry: polygon_point_on_surface
+        min_zoom:
+          default_value: 12
+          overrides:
+            11:
+              amenity: [hospital, bus_station]
+              aeroway: [aerodrome, airport]
+              place: [city, town]
+            12:
+              amenity: [fuel, pharmacy, police, bank, place_of_worship]
+              tourism: [hotel, attraction, museum]
+              leisure: [park, garden]
+        include_when: *poi_filter
+        exclude_when:
+          name: ''
+        attributes: *poi_attributes
