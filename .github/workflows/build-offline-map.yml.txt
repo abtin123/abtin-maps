@@ -1,0 +1,210 @@
+name: Build all offline maps
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag holding map assets'
+        required: true
+        default: 'maps-v3'
+        type: string
+      countries_file:
+        description: 'Optional repository-relative JSON catalog; empty = all Geofabrik country/region extracts'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '30 3 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: offline-map-release-${{ github.event.inputs.release_tag || 'maps-v3' }}
+  cancel-in-progress: false
+
+env:
+  CHUNK_COUNT: 64
+  RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v3' }}
+  COUNTRIES_FILE: ${{ github.event.inputs.countries_file || '' }}
+
+jobs:
+  catalog:
+    name: Discover complete Geofabrik catalog
+    runs-on: ubuntu-24.04
+    outputs:
+      count: ${{ steps.catalog.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - id: catalog
+        run: |
+          set -euo pipefail
+          python3 tool/maps/discover_map_catalog.py --output /tmp/map-catalog.json
+          python3 -m json.tool /tmp/map-catalog.json >/dev/null
+          echo "count=$(python3 -c 'import json;print(len(json.load(open("/tmp/map-catalog.json"))))')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: map-catalog
+          path: /tmp/map-catalog.json
+          retention-days: 3
+
+  build-chunk:
+    name: Build map chunk ${{ matrix.chunk }}
+    needs: catalog
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: map-catalog
+          path: catalog
+      - name: Install map build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool
+          python -m pip install --upgrade pip
+          python -m pip install osmium zstandard brotli
+          PMTILES_URL='https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_x86_64.tar.gz'
+          curl --fail --location --retry 8 --retry-all-errors --retry-delay 10 --retry-max-time 600 "$PMTILES_URL" -o /tmp/go-pmtiles.tar.gz
+          mkdir -p "$HOME/.local/bin"; tar -xzf /tmp/go-pmtiles.tar.gz -C /tmp
+          install -m 755 /tmp/pmtiles "$HOME/.local/bin/pmtiles"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pmtiles version
+          osmium --version
+      - name: Fetch previous manifest and asset list
+        run: |
+          set -euo pipefail
+          mkdir -p previous dist patches old
+          gh release download "$RELEASE_TAG" --pattern manifest.json --dir previous || true
+      - name: Build selected catalog entries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          chmod +x tool/maps/*.sh tool/maps/*.py
+          args=(--root "$GITHUB_WORKSPACE" --output "$GITHUB_WORKSPACE/dist" --release-tag "$RELEASE_TAG" --chunk-index "${{ matrix.chunk }}" --chunk-count "$CHUNK_COUNT")
+          if [ -n "$COUNTRIES_FILE" ]; then
+            args+=(--countries-file "$GITHUB_WORKSPACE/$COUNTRIES_FILE")
+          else
+            args+=(--countries-file "$GITHUB_WORKSPACE/catalog/map-catalog.json")
+          fi
+          if [ -f previous/manifest.json ]; then args+=(--previous "$GITHUB_WORKSPACE/previous/manifest.json"); fi
+          python3 tool/maps/build_all_maps.py "${args[@]}"
+          python3 -m json.tool dist/manifest.json >/dev/null
+          python3 -m json.tool dist/build-report.json >/dev/null
+      - name: Build server-side delta patches for changed maps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for archive in dist/*.abm; do
+            code="$(basename "$archive" .abm)"
+            if gh release download "$RELEASE_TAG" --pattern "${code}.abm" --dir old >/dev/null 2>&1; then
+              python3 tool/maps/generate_chunk_patch.py --base "old/${code}.abm" --target "$archive" --code "$code" --output-dir patches || true
+            fi
+          done
+          python3 tool/maps/attach_patches.py --manifest dist/manifest.json --patch-dir patches
+      - name: Verify every newly built ABM
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for archive in dist/*.abm; do
+            code="$(basename "$archive" .abm)"
+            python3 tool/maps/verify_abm_container.py "$archive" --region "$code" >/dev/null
+            pmtiles verify "$archive"
+          done
+      - name: Upload chunk output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-dist-${{ matrix.chunk }}
+          path: |
+            dist/
+            patches/
+          if-no-files-found: warn
+          retention-days: 3
+
+  merge-and-publish:
+    name: Verify complete catalog and publish
+    needs: build-chunk
+    # Publish verified successes even when one or more countries fail.
+    # The report and manifest mark the release as partial in that case.
+    if: ${{ always() && (needs.build-chunk.result == 'success' || needs.build-chunk.result == 'failure') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: map-dist-*
+          path: chunk-output
+          merge-multiple: false
+      - name: Fetch previous manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previous release-dist
+          gh release download "$RELEASE_TAG" --pattern manifest.json --dir previous || true
+      - name: Select authoritative expected catalog
+        run: |
+          set -euo pipefail
+          catalog="$(find chunk-output -name expected-catalog.json | sort | head -1)"
+          test -n "$catalog" && cp "$catalog" expected-catalog.json
+      - name: Merge and prove that no country/region disappeared
+        run: |
+          set -euo pipefail
+          python3 tool/maps/merge_map_outputs.py \
+            --input-root "$GITHUB_WORKSPACE/chunk-output" \
+            --output "$GITHUB_WORKSPACE/release-dist" \
+            --release-tag "$RELEASE_TAG" \
+            --expected-catalog "$GITHUB_WORKSPACE/expected-catalog.json" \
+            $(if [ -f previous/manifest.json ]; then echo "--previous $GITHUB_WORKSPACE/previous/manifest.json"; fi) \$
+            --allow-partial
+          if [ "${{ needs.build-chunk.result }}" = "success" ]; then
+            python3 tool/maps/verify_release_catalog.py --catalog expected-catalog.json --manifest release-dist/manifest.json
+          else
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('release-dist/manifest.json').read_text())
+          assert m.get('partial') is True, 'failed build must produce a partial manifest'
+          assert m.get('published_count', 0) > 0, 'partial release must contain at least one map'
+          print(f"Partial release accepted: {m['published_count']}/{m['expected_count']} maps")
+          PY
+          fi
+          python3 -m json.tool release-dist/manifest.json >/dev/null
+          python3 -m json.tool release-dist/build-report.json >/dev/null
+      - name: Copy patch assets into release directory
+        run: |
+          set -euo pipefail
+          find chunk-output -type f \( -name '*.patch.json' -o -name '*.patch.bin' \) -print0 | while IFS= read -r -d '' f; do cp -f "$f" release-dist/; done
+      - name: Validate release asset count and sizes
+        run: |
+          set -euo pipefail
+          count=$(find release-dist -maxdepth 1 -type f | wc -l)
+          test "$count" -le 998 || { echo "Release would exceed 1000 assets: $count" >&2; exit 1; }
+          for f in release-dist/*.abm; do [ ! -e "$f" ] || test "$(stat -c%s "$f")" -lt $((2*1024*1024*1024)); done
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --title "Abtin Offline Maps" --notes "Complete country/region offline maps; weekly source update with block-level map patches."
+          fi
+          files=(release-dist/manifest.json release-dist/build-report.json)
+          shopt -s nullglob
+          files+=(release-dist/*.abm release-dist/*.patch.json release-dist/*.patch.bin)
+          gh release upload "$RELEASE_TAG" "${files[@]}" --clobber
