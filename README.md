@@ -20,6 +20,8 @@
 | `tool/maps/verify_abm_graph.py` | کنترل header، zstd، strings و index graph |
 | `tool/maps/pack_abm_container.py` | قراردادن PMTiles، graph و style در یک `CC.abm` استاندارد |
 | `tool/maps/update_map_manifest.py` | افزودن/جایگزینی کشور ساخته‌شده در `manifest.json` |
+| `tool/maps/generate_chunk_patch.py` | ساخت patch سطح-بلاک بین نسخهٔ قدیم و جدید `CC.abm` (اجرای هفتگی) |
+| `tool/maps/attach_patches.py` | وصل‌کردن patchهای ساخته‌شده به `manifest.json` |
 | `tool/maps/abtin_basemap.yml` | schema سبک Planetiler، بدون لایهٔ POI |
 | `tool/maps/styles/day.json` و `tool/maps/styles/night.json` | styleهای محلی روز/شب |
 
@@ -51,7 +53,7 @@ tool/maps/build_country_abm.sh IR https://download.geofabrik.de/asia/iran-latest
 
 ## محدودیت‌های مهم و واقعی
 
-این script از **snapshot کامل** OSM PBF استفاده می‌کند. هر build کشور، نسخهٔ جدید همان PBF را دریافت می‌کند و کل `CC.abm` را دوباره تولید می‌کند؛ PMTiles برای patch درجا طراحی نشده است. بنابراین client فقط وقتی archive جدید را دانلود می‌کند که SHA-256 در manifest تغییر کرده باشد. «دانلود فقط تغییرهای OSM» با یک فایل archive تک‌فایلی ممکن نیست، مگر اینکه سمت سرور یک protocol patch جدا و client patcher امن طراحی شود؛ این workflow عمداً چنین ادعایی ندارد.[1]
+این script از **snapshot کامل** OSM PBF استفاده می‌کند. هر build کشور، نسخهٔ جدید همان PBF را دریافت می‌کند و کل `CC.abm` را دوباره تولید می‌کند؛ خودِ فایل PMTiles برای patch درجا طراحی نشده است. با این حال، `build-offline-map.yml` هر هفته (`cron: '30 3 * * 1'`) به‌صورت خودکار اجرا می‌شود و برای کشورهایی که تغییر کرده‌اند، با `generate_chunk_patch.py` یک **patch سطح-بلاک** بین `CC.abm` قدیم و جدید می‌سازد و با `attach_patches.py` آن را به `manifest.json` وصل می‌کند؛ فایل‌های `CC.patch.json` و `CC.patch.bin` هم مثل خود `.abm` روی همان GitHub Release منتشر می‌شوند. یعنی «دانلود فقط تغییرها» در سطح سرور وجود دارد؛ آنچه اینجا تضمین نمی‌شود این است که کلاینت (اپ Flutter) این patchها را واقعاً دانلود/اعمال کند — آن منطق خارج از این repository است. اگر اپ از patch استفاده نکند، همچنان به دانلود کامل archive بازمی‌گردد چون SHA-256 در manifest تغییر کرده است.[1]
 
 برای کشورهایی که archive نهایی از سقف asset گیت‌هاب بزرگ‌تر شود، ساخت تک‌فایل قابل انتشار در GitHub Release نیست. در آن حالت باید zoom/building detail را کم کرد یا یک object storage مناسبِ فایل‌های بزرگ انتخاب کرد؛ graph و PMTiles همچنان داخل **یک فایل دانلودی `CC.abm`** می‌مانند. از شکستن graph و display به دو asset جدا استفاده نکنید.
 
