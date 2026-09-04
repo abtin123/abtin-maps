@@ -1,0 +1,4301 @@
+{
+  "source": "logs_91710220617.zip",
+  "total_chunks": 64,
+  "total_country_or_region_entries": 379,
+  "downloaded_count": 258,
+  "error_count": 121,
+  "records": [
+    {
+      "code": "AD",
+      "chunk": 0,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AD.abm"
+    },
+    {
+      "code": "CN-CHONGQING",
+      "chunk": 0,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-CHONGQING.abm"
+    },
+    {
+      "code": "DE-SCHLESWIG-HOLSTEIN",
+      "chunk": 0,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-SCHLESWIG-HOLSTEIN.abm"
+    },
+    {
+      "code": "GB-WALES",
+      "chunk": 0,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MA",
+      "chunk": 0,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "PL-WIELKOPOLSKIE",
+      "chunk": 0,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-WIELKOPOLSKIE.abm"
+    },
+    {
+      "code": "ZA",
+      "chunk": 0,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ZA.abm"
+    },
+    {
+      "code": "AF",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AF.abm"
+    },
+    {
+      "code": "CN-FUJIAN",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-FUJIAN.abm"
+    },
+    {
+      "code": "DE-THUERINGEN",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-THUERINGEN.abm"
+    },
+    {
+      "code": "GE",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "GE.abm"
+    },
+    {
+      "code": "MC",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MC.abm"
+    },
+    {
+      "code": "PL-ZACHODNIOPOMORSKIE",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-ZACHODNIOPOMORSKIE.abm"
+    },
+    {
+      "code": "ZM",
+      "chunk": 1,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ZM.abm"
+    },
+    {
+      "code": "AL",
+      "chunk": 2,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AL.abm"
+    },
+    {
+      "code": "CN-GANSU",
+      "chunk": 2,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-GANSU.abm"
+    },
+    {
+      "code": "DJ",
+      "chunk": 2,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DJ.abm"
+    },
+    {
+      "code": "GF",
+      "chunk": 2,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MD",
+      "chunk": 2,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MD.abm"
+    },
+    {
+      "code": "PR",
+      "chunk": 2,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ZW",
+      "chunk": 2,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ZW.abm"
+    },
+    {
+      "code": "AM",
+      "chunk": 3,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AM.abm"
+    },
+    {
+      "code": "CN-GUANGDONG",
+      "chunk": 3,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-GUANGDONG.abm"
+    },
+    {
+      "code": "DK",
+      "chunk": 3,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DK.abm"
+    },
+    {
+      "code": "GH",
+      "chunk": 3,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ME",
+      "chunk": 3,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ME.abm"
+    },
+    {
+      "code": "PS",
+      "chunk": 3,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PS.abm"
+    },
+    {
+      "code": "AO",
+      "chunk": 4,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AO.abm"
+    },
+    {
+      "code": "CN-GUANGXI",
+      "chunk": 4,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-GUANGXI.abm"
+    },
+    {
+      "code": "DZ",
+      "chunk": 4,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "GL",
+      "chunk": 4,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MG",
+      "chunk": 4,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MG.abm"
+    },
+    {
+      "code": "PT",
+      "chunk": 4,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AQ",
+      "chunk": 5,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-GUIZHOU",
+      "chunk": 5,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-GUIZHOU.abm"
+    },
+    {
+      "code": "EC",
+      "chunk": 5,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "GN",
+      "chunk": 5,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MH",
+      "chunk": 5,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "PW",
+      "chunk": 5,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PW.abm"
+    },
+    {
+      "code": "AR",
+      "chunk": 6,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-HAINAN",
+      "chunk": 6,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-HAINAN.abm"
+    },
+    {
+      "code": "EE",
+      "chunk": 6,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "EE.abm"
+    },
+    {
+      "code": "GQ",
+      "chunk": 6,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "GQ.abm"
+    },
+    {
+      "code": "MK",
+      "chunk": 6,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MK.abm"
+    },
+    {
+      "code": "PY",
+      "chunk": 6,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AT",
+      "chunk": 7,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AT.abm"
+    },
+    {
+      "code": "CN-HEBEI",
+      "chunk": 7,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "EG",
+      "chunk": 7,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "EG.abm"
+    },
+    {
+      "code": "GR",
+      "chunk": 7,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "GR.abm"
+    },
+    {
+      "code": "ML",
+      "chunk": 7,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "QA",
+      "chunk": 7,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AU-ACT",
+      "chunk": 8,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-ACT.abm"
+    },
+    {
+      "code": "CN-HEILONGJIANG",
+      "chunk": 8,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-HEILONGJIANG.abm"
+    },
+    {
+      "code": "ER",
+      "chunk": 8,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ER.abm"
+    },
+    {
+      "code": "GT",
+      "chunk": 8,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MM",
+      "chunk": 8,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MM.abm"
+    },
+    {
+      "code": "RO",
+      "chunk": 8,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RO.abm"
+    },
+    {
+      "code": "AU-ASHMORE-CARTIER",
+      "chunk": 9,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-HENAN",
+      "chunk": 9,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-HENAN.abm"
+    },
+    {
+      "code": "ES-ANDALUCIA",
+      "chunk": 9,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "GW",
+      "chunk": 9,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MN",
+      "chunk": 9,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MN.abm"
+    },
+    {
+      "code": "RS",
+      "chunk": 9,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RS.abm"
+    },
+    {
+      "code": "AU-CHRISTMAS-ISLAND",
+      "chunk": 10,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-CHRISTMAS-ISLAND.abm"
+    },
+    {
+      "code": "CN-HONG-KONG",
+      "chunk": 10,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ES-ARAGON",
+      "chunk": 10,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "GY",
+      "chunk": 10,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MR",
+      "chunk": 10,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "RU-CENTRAL-FED-DISTRICT",
+      "chunk": 10,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-CENTRAL-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-COCOS-ISLANDS",
+      "chunk": 11,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-COCOS-ISLANDS.abm"
+    },
+    {
+      "code": "CN-HUBEI",
+      "chunk": 11,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-HUBEI.abm"
+    },
+    {
+      "code": "ES-ASTURIAS",
+      "chunk": 11,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "HN",
+      "chunk": 11,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MT",
+      "chunk": 11,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MT.abm"
+    },
+    {
+      "code": "RU-CRIMEAN-FED-DISTRICT",
+      "chunk": 11,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-CRIMEAN-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-CORAL-SEA-ISLANDS",
+      "chunk": 12,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-CORAL-SEA-ISLANDS.abm"
+    },
+    {
+      "code": "CN-HUNAN",
+      "chunk": 12,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-HUNAN.abm"
+    },
+    {
+      "code": "ES-CANTABRIA",
+      "chunk": 12,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "HR",
+      "chunk": 12,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "HR.abm"
+    },
+    {
+      "code": "MU",
+      "chunk": 12,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MU.abm"
+    },
+    {
+      "code": "RU-FAR-EASTERN-FED-DISTRICT",
+      "chunk": 12,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AU-HEARD-MCDONALD",
+      "chunk": 13,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-INNER-MONGOLIA",
+      "chunk": 13,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-INNER-MONGOLIA.abm"
+    },
+    {
+      "code": "ES-CASTILLA-LA-MANCHA",
+      "chunk": 13,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "HT",
+      "chunk": 13,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "MV",
+      "chunk": 13,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MV.abm"
+    },
+    {
+      "code": "RU-KALININGRAD",
+      "chunk": 13,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-KALININGRAD.abm"
+    },
+    {
+      "code": "AU-NEW-SOUTH-WALES",
+      "chunk": 14,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-NEW-SOUTH-WALES.abm"
+    },
+    {
+      "code": "CN-JIANGSU",
+      "chunk": 14,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-JIANGSU.abm"
+    },
+    {
+      "code": "ES-CASTILLA-Y-LEON",
+      "chunk": 14,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "HU",
+      "chunk": 14,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "HU.abm"
+    },
+    {
+      "code": "MW",
+      "chunk": 14,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MW.abm"
+    },
+    {
+      "code": "RU-NORTH-CAUCASUS-FED-DISTRICT",
+      "chunk": 14,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AU-NORFOLK-ISLAND",
+      "chunk": 15,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-NORFOLK-ISLAND.abm"
+    },
+    {
+      "code": "CN-JIANGXI",
+      "chunk": 15,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-JIANGXI.abm"
+    },
+    {
+      "code": "ES-CATALUNA",
+      "chunk": 15,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ES-CATALUNA.abm"
+    },
+    {
+      "code": "ID-JAVA",
+      "chunk": 15,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-JAVA.abm"
+    },
+    {
+      "code": "MX",
+      "chunk": 15,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "RU-NORTHWESTERN-FED-DISTRICT",
+      "chunk": 15,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-NORTHWESTERN-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-NORTHERN-TERRITORY",
+      "chunk": 16,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-NORTHERN-TERRITORY.abm"
+    },
+    {
+      "code": "CN-JILIN",
+      "chunk": 16,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-JILIN.abm"
+    },
+    {
+      "code": "ES-CEUTA",
+      "chunk": 16,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ID-KALIMANTAN",
+      "chunk": 16,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-KALIMANTAN.abm"
+    },
+    {
+      "code": "MY",
+      "chunk": 16,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MY.abm"
+    },
+    {
+      "code": "RU-SIBERIAN-FED-DISTRICT",
+      "chunk": 16,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-SIBERIAN-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-QUEENSLAND",
+      "chunk": 17,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-QUEENSLAND.abm"
+    },
+    {
+      "code": "CN-LIAONING",
+      "chunk": 17,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-LIAONING.abm"
+    },
+    {
+      "code": "ES-EXTREMADURA",
+      "chunk": 17,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ID-MALUKU",
+      "chunk": 17,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-MALUKU.abm"
+    },
+    {
+      "code": "MZ",
+      "chunk": 17,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "MZ.abm"
+    },
+    {
+      "code": "RU-SOUTH-FED-DISTRICT",
+      "chunk": 17,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AU-SOUTH-AUSTRALIA",
+      "chunk": 18,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-SOUTH-AUSTRALIA.abm"
+    },
+    {
+      "code": "CN-MACAU",
+      "chunk": 18,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-MACAU.abm"
+    },
+    {
+      "code": "ES-GALICIA",
+      "chunk": 18,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ID-NUSA-TENGGARA",
+      "chunk": 18,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-NUSA-TENGGARA.abm"
+    },
+    {
+      "code": "NA",
+      "chunk": 18,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NA.abm"
+    },
+    {
+      "code": "RU-URAL-FED-DISTRICT",
+      "chunk": 18,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-URAL-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-TASMANIA",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-TASMANIA.abm"
+    },
+    {
+      "code": "CN-NINGXIA",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-NINGXIA.abm"
+    },
+    {
+      "code": "ES-ISLAS-BALEARES",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ES-ISLAS-BALEARES.abm"
+    },
+    {
+      "code": "ID-PAPUA",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-PAPUA.abm"
+    },
+    {
+      "code": "NC",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NC.abm"
+    },
+    {
+      "code": "RU-VOLGA-FED-DISTRICT",
+      "chunk": 19,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "RU-VOLGA-FED-DISTRICT.abm"
+    },
+    {
+      "code": "AU-VICTORIA",
+      "chunk": 20,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-VICTORIA.abm"
+    },
+    {
+      "code": "CN-QINGHAI",
+      "chunk": 20,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ES-LA-RIOJA",
+      "chunk": 20,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ID-SULAWESI",
+      "chunk": 20,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-SULAWESI.abm"
+    },
+    {
+      "code": "NE",
+      "chunk": 20,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NE.abm"
+    },
+    {
+      "code": "RW",
+      "chunk": 20,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "AU-WESTERN-AUSTRALIA",
+      "chunk": 21,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AU-WESTERN-AUSTRALIA.abm"
+    },
+    {
+      "code": "CN-SHAANXI",
+      "chunk": 21,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-SHAANXI.abm"
+    },
+    {
+      "code": "ES-MADRID",
+      "chunk": 21,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "ID-SUMATRA",
+      "chunk": 21,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ID-SUMATRA.abm"
+    },
+    {
+      "code": "NG",
+      "chunk": 21,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NG.abm"
+    },
+    {
+      "code": "SB",
+      "chunk": 21,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SB.abm"
+    },
+    {
+      "code": "AZ",
+      "chunk": 22,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "AZ.abm"
+    },
+    {
+      "code": "CN-SHANDONG",
+      "chunk": 22,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-SHANDONG.abm"
+    },
+    {
+      "code": "ES-MELILLA",
+      "chunk": 22,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IE",
+      "chunk": 22,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NI",
+      "chunk": 22,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "SC",
+      "chunk": 22,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SC.abm"
+    },
+    {
+      "code": "BA",
+      "chunk": 23,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BA.abm"
+    },
+    {
+      "code": "CN-SHANGHAI",
+      "chunk": 23,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-SHANGHAI.abm"
+    },
+    {
+      "code": "ES-MURCIA",
+      "chunk": 23,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IN-CENTRAL-ZONE",
+      "chunk": 23,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NL-DRENTHE",
+      "chunk": 23,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-DRENTHE.abm"
+    },
+    {
+      "code": "SD",
+      "chunk": 23,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SD.abm"
+    },
+    {
+      "code": "BD",
+      "chunk": 24,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BD.abm"
+    },
+    {
+      "code": "CN-SHANXI",
+      "chunk": 24,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-SHANXI.abm"
+    },
+    {
+      "code": "ES-NAVARRA",
+      "chunk": 24,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IN-EASTERN-ZONE",
+      "chunk": 24,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IN-EASTERN-ZONE.abm"
+    },
+    {
+      "code": "NL-FLEVOLAND",
+      "chunk": 24,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-FLEVOLAND.abm"
+    },
+    {
+      "code": "SE",
+      "chunk": 24,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SE.abm"
+    },
+    {
+      "code": "BE",
+      "chunk": 25,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BE.abm"
+    },
+    {
+      "code": "CN-SICHUAN",
+      "chunk": 25,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-SICHUAN.abm"
+    },
+    {
+      "code": "ES-PAIS-VASCO",
+      "chunk": 25,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IN-NORTH-EASTERN-ZONE",
+      "chunk": 25,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NL-FRIESLAND",
+      "chunk": 25,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-FRIESLAND.abm"
+    },
+    {
+      "code": "SH",
+      "chunk": 25,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BF",
+      "chunk": 26,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-TIANJIN",
+      "chunk": 26,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-TIANJIN.abm"
+    },
+    {
+      "code": "ES-VALENCIA",
+      "chunk": 26,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IN-NORTHERN-ZONE",
+      "chunk": 26,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NL-GELDERLAND",
+      "chunk": 26,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-GELDERLAND.abm"
+    },
+    {
+      "code": "SI",
+      "chunk": 26,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SI.abm"
+    },
+    {
+      "code": "BG",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BG.abm"
+    },
+    {
+      "code": "CN-TIBET",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-TIBET.abm"
+    },
+    {
+      "code": "ET",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ET.abm"
+    },
+    {
+      "code": "IN-SOUTHERN-ZONE",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IN-SOUTHERN-ZONE.abm"
+    },
+    {
+      "code": "NL-GRONINGEN",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-GRONINGEN.abm"
+    },
+    {
+      "code": "SK",
+      "chunk": 27,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SK.abm"
+    },
+    {
+      "code": "BI",
+      "chunk": 28,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BI.abm"
+    },
+    {
+      "code": "CN-XINJIANG",
+      "chunk": 28,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-XINJIANG.abm"
+    },
+    {
+      "code": "FI",
+      "chunk": 28,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FI.abm"
+    },
+    {
+      "code": "IN-WESTERN-ZONE",
+      "chunk": 28,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IN-WESTERN-ZONE.abm"
+    },
+    {
+      "code": "NL-LIMBURG",
+      "chunk": 28,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-LIMBURG.abm"
+    },
+    {
+      "code": "SL",
+      "chunk": 28,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BJ",
+      "chunk": 29,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BJ.abm"
+    },
+    {
+      "code": "CN-YUNNAN",
+      "chunk": 29,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-YUNNAN.abm"
+    },
+    {
+      "code": "FJ",
+      "chunk": 29,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IQ",
+      "chunk": 29,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IQ.abm"
+    },
+    {
+      "code": "NL-NOORD-BRABANT",
+      "chunk": 29,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-NOORD-BRABANT.abm"
+    },
+    {
+      "code": "SN",
+      "chunk": 29,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BO",
+      "chunk": 30,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-ZHEJIANG",
+      "chunk": 30,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-ZHEJIANG.abm"
+    },
+    {
+      "code": "FM",
+      "chunk": 30,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FM.abm"
+    },
+    {
+      "code": "IR",
+      "chunk": 30,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IR.abm"
+    },
+    {
+      "code": "NL-NOORD-HOLLAND",
+      "chunk": 30,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-NOORD-HOLLAND.abm"
+    },
+    {
+      "code": "SO",
+      "chunk": 30,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BR-CENTRO-OESTE",
+      "chunk": 31,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CO",
+      "chunk": 31,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "FO",
+      "chunk": 31,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IS",
+      "chunk": 31,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NL-OVERIJSSEL",
+      "chunk": 31,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-OVERIJSSEL.abm"
+    },
+    {
+      "code": "SR",
+      "chunk": 31,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BR-NORDESTE",
+      "chunk": 32,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CR",
+      "chunk": 32,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "FR-ALSACE",
+      "chunk": 32,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-ALSACE.abm"
+    },
+    {
+      "code": "IT-CENTRO",
+      "chunk": 32,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IT-CENTRO.abm"
+    },
+    {
+      "code": "NL-UTRECHT",
+      "chunk": 32,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-UTRECHT.abm"
+    },
+    {
+      "code": "SS",
+      "chunk": 32,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SS.abm"
+    },
+    {
+      "code": "BR-NORTE",
+      "chunk": 33,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CU",
+      "chunk": 33,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "FR-AQUITAINE",
+      "chunk": 33,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IT-ISOLE",
+      "chunk": 33,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IT-ISOLE.abm"
+    },
+    {
+      "code": "NL-ZEELAND",
+      "chunk": 33,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-ZEELAND.abm"
+    },
+    {
+      "code": "ST",
+      "chunk": 33,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "ST.abm"
+    },
+    {
+      "code": "BR-SUDESTE",
+      "chunk": 34,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CV",
+      "chunk": 34,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "FR-AUVERGNE",
+      "chunk": 34,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-AUVERGNE.abm"
+    },
+    {
+      "code": "IT-NORD-EST",
+      "chunk": 34,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IT-NORD-EST.abm"
+    },
+    {
+      "code": "NL-ZUID-HOLLAND",
+      "chunk": 34,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NL-ZUID-HOLLAND.abm"
+    },
+    {
+      "code": "SV",
+      "chunk": 34,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BR-SUL",
+      "chunk": 35,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CY",
+      "chunk": 35,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CY.abm"
+    },
+    {
+      "code": "FR-BASSE-NORMANDIE",
+      "chunk": 35,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "IT-NORD-OVEST",
+      "chunk": 35,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IT-NORD-OVEST.abm"
+    },
+    {
+      "code": "NO-NORD-NORGE",
+      "chunk": 35,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NO-NORD-NORGE.abm"
+    },
+    {
+      "code": "SY",
+      "chunk": 35,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SY.abm"
+    },
+    {
+      "code": "BS",
+      "chunk": 36,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-JIHOCESKY",
+      "chunk": 36,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-JIHOCESKY.abm"
+    },
+    {
+      "code": "FR-BOURGOGNE",
+      "chunk": 36,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-BOURGOGNE.abm"
+    },
+    {
+      "code": "IT-SUD",
+      "chunk": 36,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "IT-SUD.abm"
+    },
+    {
+      "code": "NO-OSTLANDET",
+      "chunk": 36,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NO-OSTLANDET.abm"
+    },
+    {
+      "code": "SZ",
+      "chunk": 36,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "SZ.abm"
+    },
+    {
+      "code": "BT",
+      "chunk": 37,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BT.abm"
+    },
+    {
+      "code": "CZ-JIHOMORAVSKY",
+      "chunk": 37,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-JIHOMORAVSKY.abm"
+    },
+    {
+      "code": "FR-BRETAGNE",
+      "chunk": 37,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "JM",
+      "chunk": 37,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "NO-SORLANDET",
+      "chunk": 37,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NO-SORLANDET.abm"
+    },
+    {
+      "code": "TD",
+      "chunk": 37,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TD.abm"
+    },
+    {
+      "code": "BW",
+      "chunk": 38,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BW.abm"
+    },
+    {
+      "code": "CZ-KARLOVARSKY",
+      "chunk": 38,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-KARLOVARSKY.abm"
+    },
+    {
+      "code": "FR-CENTRE",
+      "chunk": 38,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-CENTRE.abm"
+    },
+    {
+      "code": "JO",
+      "chunk": 38,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JO.abm"
+    },
+    {
+      "code": "NO-SVALBARD-JANMAYEN",
+      "chunk": 38,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "TG",
+      "chunk": 38,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BY",
+      "chunk": 39,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "BY.abm"
+    },
+    {
+      "code": "CZ-KRALOVEHRADECKY",
+      "chunk": 39,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-KRALOVEHRADECKY.abm"
+    },
+    {
+      "code": "FR-CHAMPAGNE-ARDENNE",
+      "chunk": 39,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-CHAMPAGNE-ARDENNE.abm"
+    },
+    {
+      "code": "JP-CHUBU",
+      "chunk": 39,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-CHUBU.abm"
+    },
+    {
+      "code": "NO-TRONDELAG",
+      "chunk": 39,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NO-TRONDELAG.abm"
+    },
+    {
+      "code": "TH",
+      "chunk": 39,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "BZ",
+      "chunk": 40,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-LIBERECKY",
+      "chunk": 40,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-LIBERECKY.abm"
+    },
+    {
+      "code": "FR-CORSE",
+      "chunk": 40,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-CORSE.abm"
+    },
+    {
+      "code": "JP-CHUGOKU",
+      "chunk": 40,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-CHUGOKU.abm"
+    },
+    {
+      "code": "NO-VESTLANDET",
+      "chunk": 40,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NO-VESTLANDET.abm"
+    },
+    {
+      "code": "TJ",
+      "chunk": 40,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TJ.abm"
+    },
+    {
+      "code": "CA-ALBERTA",
+      "chunk": 41,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-MORAVSKOSLEZKY",
+      "chunk": 41,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-MORAVSKOSLEZKY.abm"
+    },
+    {
+      "code": "FR-FRANCHE-COMTE",
+      "chunk": 41,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-FRANCHE-COMTE.abm"
+    },
+    {
+      "code": "JP-HOKKAIDO",
+      "chunk": 41,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-HOKKAIDO.abm"
+    },
+    {
+      "code": "NP",
+      "chunk": 41,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NP.abm"
+    },
+    {
+      "code": "TL",
+      "chunk": 41,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TL.abm"
+    },
+    {
+      "code": "CA-BRITISH-COLUMBIA",
+      "chunk": 42,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-OLOMOUCKY",
+      "chunk": 42,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-OLOMOUCKY.abm"
+    },
+    {
+      "code": "FR-GUADELOUPE",
+      "chunk": 42,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "JP-KANSAI",
+      "chunk": 42,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-KANSAI.abm"
+    },
+    {
+      "code": "NR",
+      "chunk": 42,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "NR.abm"
+    },
+    {
+      "code": "TM",
+      "chunk": 42,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TM.abm"
+    },
+    {
+      "code": "CA-MANITOBA",
+      "chunk": 43,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-PARDUBICKY",
+      "chunk": 43,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-PARDUBICKY.abm"
+    },
+    {
+      "code": "FR-GUYANE",
+      "chunk": 43,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "JP-KANTO",
+      "chunk": 43,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-KANTO.abm"
+    },
+    {
+      "code": "NU",
+      "chunk": 43,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "TN",
+      "chunk": 43,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TN.abm"
+    },
+    {
+      "code": "CA-NEW-BRUNSWICK",
+      "chunk": 44,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-PLZENSKY",
+      "chunk": 44,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-PLZENSKY.abm"
+    },
+    {
+      "code": "FR-HAUTE-NORMANDIE",
+      "chunk": 44,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-HAUTE-NORMANDIE.abm"
+    },
+    {
+      "code": "JP-KYUSHU",
+      "chunk": 44,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-KYUSHU.abm"
+    },
+    {
+      "code": "NZ",
+      "chunk": 44,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "TO",
+      "chunk": 44,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CA-NEWFOUNDLAND-AND-LABRADOR",
+      "chunk": 45,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-PRAHA",
+      "chunk": 45,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-PRAHA.abm"
+    },
+    {
+      "code": "FR-ILE-DE-FRANCE",
+      "chunk": 45,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-ILE-DE-FRANCE.abm"
+    },
+    {
+      "code": "JP-SHIKOKU",
+      "chunk": 45,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-SHIKOKU.abm"
+    },
+    {
+      "code": "PA",
+      "chunk": 45,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "TR",
+      "chunk": 45,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TR.abm"
+    },
+    {
+      "code": "CA-NORTHWEST-TERRITORIES",
+      "chunk": 46,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-STREDOCESKY",
+      "chunk": 46,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-STREDOCESKY.abm"
+    },
+    {
+      "code": "FR-LANGUEDOC-ROUSSILLON",
+      "chunk": 46,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-LANGUEDOC-ROUSSILLON.abm"
+    },
+    {
+      "code": "JP-TOHOKU",
+      "chunk": 46,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "JP-TOHOKU.abm"
+    },
+    {
+      "code": "PE",
+      "chunk": 46,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "TV",
+      "chunk": 46,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CA-NOVA-SCOTIA",
+      "chunk": 47,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-USTECKY",
+      "chunk": 47,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-USTECKY.abm"
+    },
+    {
+      "code": "FR-LIMOUSIN",
+      "chunk": 47,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-LIMOUSIN.abm"
+    },
+    {
+      "code": "KE",
+      "chunk": 47,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "KE.abm"
+    },
+    {
+      "code": "PG",
+      "chunk": 47,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PG.abm"
+    },
+    {
+      "code": "TW",
+      "chunk": 47,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TW.abm"
+    },
+    {
+      "code": "CA-NUNAVUT",
+      "chunk": 48,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-VYSOCINA",
+      "chunk": 48,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-VYSOCINA.abm"
+    },
+    {
+      "code": "FR-LORRAINE",
+      "chunk": 48,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-LORRAINE.abm"
+    },
+    {
+      "code": "KG",
+      "chunk": 48,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "KG.abm"
+    },
+    {
+      "code": "PH",
+      "chunk": 48,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PH.abm"
+    },
+    {
+      "code": "TZ",
+      "chunk": 48,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "TZ.abm"
+    },
+    {
+      "code": "CA-ONTARIO",
+      "chunk": 49,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CZ-ZLINSKY",
+      "chunk": 49,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CZ-ZLINSKY.abm"
+    },
+    {
+      "code": "FR-MARTINIQUE",
+      "chunk": 49,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "KH",
+      "chunk": 49,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "KH.abm"
+    },
+    {
+      "code": "PK",
+      "chunk": 49,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PK.abm"
+    },
+    {
+      "code": "UA",
+      "chunk": 49,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "UA.abm"
+    },
+    {
+      "code": "CA-PRINCE-EDWARD-ISLAND",
+      "chunk": 50,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-BADEN-WUERTTEMBERG",
+      "chunk": 50,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-BADEN-WUERTTEMBERG.abm"
+    },
+    {
+      "code": "FR-MAYOTTE",
+      "chunk": 50,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-MAYOTTE.abm"
+    },
+    {
+      "code": "KI",
+      "chunk": 50,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "PL-DOLNOSLASKIE",
+      "chunk": 50,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-DOLNOSLASKIE.abm"
+    },
+    {
+      "code": "UG",
+      "chunk": 50,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "UG.abm"
+    },
+    {
+      "code": "CA-QUEBEC",
+      "chunk": 51,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-BAYERN",
+      "chunk": 51,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-BAYERN.abm"
+    },
+    {
+      "code": "FR-MIDI-PYRENEES",
+      "chunk": 51,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "KP",
+      "chunk": 51,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "KP.abm"
+    },
+    {
+      "code": "PL-KUJAWSKO-POMORSKIE",
+      "chunk": 51,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-KUJAWSKO-POMORSKIE.abm"
+    },
+    {
+      "code": "US-ALASKA",
+      "chunk": 51,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CA-SASKATCHEWAN",
+      "chunk": 52,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-BERLIN",
+      "chunk": 52,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-BERLIN.abm"
+    },
+    {
+      "code": "FR-NORD-PAS-DE-CALAIS",
+      "chunk": 52,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-NORD-PAS-DE-CALAIS.abm"
+    },
+    {
+      "code": "KR",
+      "chunk": 52,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "KR.abm"
+    },
+    {
+      "code": "PL-LODZKIE",
+      "chunk": 52,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-LODZKIE.abm"
+    },
+    {
+      "code": "CD",
+      "chunk": 54,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CD.abm"
+    },
+    {
+      "code": "DE-BREMEN",
+      "chunk": 54,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-BREMEN.abm"
+    },
+    {
+      "code": "FR-PICARDIE",
+      "chunk": 54,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-PICARDIE.abm"
+    },
+    {
+      "code": "LA",
+      "chunk": 54,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LA.abm"
+    },
+    {
+      "code": "PL-LUBUSKIE",
+      "chunk": 54,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-LUBUSKIE.abm"
+    },
+    {
+      "code": "US-HAWAII",
+      "chunk": 54,
+      "built": false,
+      "failed": true,
+      "reason": "chunk/job failed; see build log",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CF",
+      "chunk": 55,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CF.abm"
+    },
+    {
+      "code": "DE-HAMBURG",
+      "chunk": 55,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-HAMBURG.abm"
+    },
+    {
+      "code": "FR-POITOU-CHARENTES",
+      "chunk": 55,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "LB",
+      "chunk": 55,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LB.abm"
+    },
+    {
+      "code": "PL-MALOPOLSKIE",
+      "chunk": 55,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-MALOPOLSKIE.abm"
+    },
+    {
+      "code": "CG",
+      "chunk": 56,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CG.abm"
+    },
+    {
+      "code": "DE-HESSEN",
+      "chunk": 56,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-HESSEN.abm"
+    },
+    {
+      "code": "FR-PROVENCE-ALPES-COTE-D-AZUR",
+      "chunk": 56,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-PROVENCE-ALPES-COTE-D-AZUR.abm"
+    },
+    {
+      "code": "LI",
+      "chunk": 56,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LI.abm"
+    },
+    {
+      "code": "PL-MAZOWIECKIE",
+      "chunk": 56,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-MAZOWIECKIE.abm"
+    },
+    {
+      "code": "UY",
+      "chunk": 56,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CH",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CH.abm"
+    },
+    {
+      "code": "DE-MECKLENBURG-VORPOMMERN",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-MECKLENBURG-VORPOMMERN.abm"
+    },
+    {
+      "code": "FR-REUNION",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-REUNION.abm"
+    },
+    {
+      "code": "LK",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LK.abm"
+    },
+    {
+      "code": "PL-OPOLSKIE",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-OPOLSKIE.abm"
+    },
+    {
+      "code": "UZ",
+      "chunk": 57,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "UZ.abm"
+    },
+    {
+      "code": "CI",
+      "chunk": 58,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-NIEDERSACHSEN",
+      "chunk": 58,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-NIEDERSACHSEN.abm"
+    },
+    {
+      "code": "FR-RHONE-ALPES",
+      "chunk": 58,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "FR-RHONE-ALPES.abm"
+    },
+    {
+      "code": "LR",
+      "chunk": 58,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "PL-PODKARPACKIE",
+      "chunk": 58,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-PODKARPACKIE.abm"
+    },
+    {
+      "code": "VE",
+      "chunk": 58,
+      "built": false,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CK",
+      "chunk": 59,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-NORDRHEIN-WESTFALEN",
+      "chunk": 59,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-NORDRHEIN-WESTFALEN.abm"
+    },
+    {
+      "code": "GA",
+      "chunk": 59,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "GA.abm"
+    },
+    {
+      "code": "LS",
+      "chunk": 59,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LS.abm"
+    },
+    {
+      "code": "PL-PODLASKIE",
+      "chunk": 59,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-PODLASKIE.abm"
+    },
+    {
+      "code": "VI",
+      "chunk": 59,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CL",
+      "chunk": 60,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "DE-RHEINLAND-PFALZ",
+      "chunk": 60,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-RHEINLAND-PFALZ.abm"
+    },
+    {
+      "code": "GB-BERMUDA",
+      "chunk": 60,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "LT",
+      "chunk": 60,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LT.abm"
+    },
+    {
+      "code": "PL-POMORSKIE",
+      "chunk": 60,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-POMORSKIE.abm"
+    },
+    {
+      "code": "VN",
+      "chunk": 60,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "VN.abm"
+    },
+    {
+      "code": "CM",
+      "chunk": 61,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CM.abm"
+    },
+    {
+      "code": "DE-SAARLAND",
+      "chunk": 61,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-SAARLAND.abm"
+    },
+    {
+      "code": "GB-ENGLAND",
+      "chunk": 61,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "LU",
+      "chunk": 61,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LU.abm"
+    },
+    {
+      "code": "PL-SLASKIE",
+      "chunk": 61,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-SLASKIE.abm"
+    },
+    {
+      "code": "VU",
+      "chunk": 61,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-ANHUI",
+      "chunk": 62,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-ANHUI.abm"
+    },
+    {
+      "code": "DE-SACHSEN",
+      "chunk": 62,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-SACHSEN.abm"
+    },
+    {
+      "code": "GB-FALKLANDS",
+      "chunk": 62,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "LV",
+      "chunk": 62,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LV.abm"
+    },
+    {
+      "code": "PL-SWIETOKRZYSKIE",
+      "chunk": 62,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-SWIETOKRZYSKIE.abm"
+    },
+    {
+      "code": "WS",
+      "chunk": 62,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "CN-BEIJING",
+      "chunk": 63,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "CN-BEIJING.abm"
+    },
+    {
+      "code": "DE-SACHSEN-ANHALT",
+      "chunk": 63,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "DE-SACHSEN-ANHALT.abm"
+    },
+    {
+      "code": "GB-SCOTLAND",
+      "chunk": 63,
+      "built": true,
+      "failed": true,
+      "reason": "update_map_manifest.py: --bbox received a negative value as a separate argument",
+      "status": "error",
+      "archive": ""
+    },
+    {
+      "code": "LY",
+      "chunk": 63,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "LY.abm"
+    },
+    {
+      "code": "PL-WARMINSKO-MAZURSKIE",
+      "chunk": 63,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "PL-WARMINSKO-MAZURSKIE.abm"
+    },
+    {
+      "code": "YE",
+      "chunk": 63,
+      "built": true,
+      "failed": false,
+      "reason": "",
+      "status": "downloaded",
+      "archive": "YE.abm"
+    }
+  ],
+  "chunks": [
+    {
+      "chunk": 0,
+      "downloaded": [
+        "AD",
+        "CN-CHONGQING",
+        "DE-SCHLESWIG-HOLSTEIN",
+        "PL-WIELKOPOLSKIE",
+        "ZA"
+      ],
+      "error": [
+        "GB-WALES",
+        "MA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 1,
+      "downloaded": [
+        "AF",
+        "CN-FUJIAN",
+        "DE-THUERINGEN",
+        "GE",
+        "MC",
+        "PL-ZACHODNIOPOMORSKIE",
+        "ZM"
+      ],
+      "error": [],
+      "log_status": "success"
+    },
+    {
+      "chunk": 2,
+      "downloaded": [
+        "AL",
+        "CN-GANSU",
+        "DJ",
+        "MD",
+        "ZW"
+      ],
+      "error": [
+        "GF",
+        "PR"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 3,
+      "downloaded": [
+        "AM",
+        "CN-GUANGDONG",
+        "DK",
+        "ME",
+        "PS"
+      ],
+      "error": [
+        "GH"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 4,
+      "downloaded": [
+        "AO",
+        "CN-GUANGXI",
+        "MG"
+      ],
+      "error": [
+        "DZ",
+        "GL",
+        "PT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 5,
+      "downloaded": [
+        "CN-GUIZHOU",
+        "PW"
+      ],
+      "error": [
+        "AQ",
+        "EC",
+        "GN",
+        "MH"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 6,
+      "downloaded": [
+        "CN-HAINAN",
+        "EE",
+        "GQ",
+        "MK"
+      ],
+      "error": [
+        "AR",
+        "PY"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 7,
+      "downloaded": [
+        "AT",
+        "EG",
+        "GR"
+      ],
+      "error": [
+        "CN-HEBEI",
+        "ML",
+        "QA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 8,
+      "downloaded": [
+        "AU-ACT",
+        "CN-HEILONGJIANG",
+        "ER",
+        "MM",
+        "RO"
+      ],
+      "error": [
+        "GT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 9,
+      "downloaded": [
+        "CN-HENAN",
+        "MN",
+        "RS"
+      ],
+      "error": [
+        "AU-ASHMORE-CARTIER",
+        "ES-ANDALUCIA",
+        "GW"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 10,
+      "downloaded": [
+        "AU-CHRISTMAS-ISLAND",
+        "RU-CENTRAL-FED-DISTRICT"
+      ],
+      "error": [
+        "CN-HONG-KONG",
+        "ES-ARAGON",
+        "GY",
+        "MR"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 11,
+      "downloaded": [
+        "AU-COCOS-ISLANDS",
+        "CN-HUBEI",
+        "MT",
+        "RU-CRIMEAN-FED-DISTRICT"
+      ],
+      "error": [
+        "ES-ASTURIAS",
+        "HN"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 12,
+      "downloaded": [
+        "AU-CORAL-SEA-ISLANDS",
+        "CN-HUNAN",
+        "HR",
+        "MU"
+      ],
+      "error": [
+        "ES-CANTABRIA",
+        "RU-FAR-EASTERN-FED-DISTRICT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 13,
+      "downloaded": [
+        "CN-INNER-MONGOLIA",
+        "MV",
+        "RU-KALININGRAD"
+      ],
+      "error": [
+        "AU-HEARD-MCDONALD",
+        "ES-CASTILLA-LA-MANCHA",
+        "HT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 14,
+      "downloaded": [
+        "AU-NEW-SOUTH-WALES",
+        "CN-JIANGSU",
+        "HU",
+        "MW"
+      ],
+      "error": [
+        "ES-CASTILLA-Y-LEON",
+        "RU-NORTH-CAUCASUS-FED-DISTRICT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 15,
+      "downloaded": [
+        "AU-NORFOLK-ISLAND",
+        "CN-JIANGXI",
+        "ES-CATALUNA",
+        "ID-JAVA",
+        "RU-NORTHWESTERN-FED-DISTRICT"
+      ],
+      "error": [
+        "MX"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 16,
+      "downloaded": [
+        "AU-NORTHERN-TERRITORY",
+        "CN-JILIN",
+        "ID-KALIMANTAN",
+        "MY",
+        "RU-SIBERIAN-FED-DISTRICT"
+      ],
+      "error": [
+        "ES-CEUTA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 17,
+      "downloaded": [
+        "AU-QUEENSLAND",
+        "CN-LIAONING",
+        "ID-MALUKU",
+        "MZ"
+      ],
+      "error": [
+        "ES-EXTREMADURA",
+        "RU-SOUTH-FED-DISTRICT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 18,
+      "downloaded": [
+        "AU-SOUTH-AUSTRALIA",
+        "CN-MACAU",
+        "ID-NUSA-TENGGARA",
+        "NA",
+        "RU-URAL-FED-DISTRICT"
+      ],
+      "error": [
+        "ES-GALICIA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 19,
+      "downloaded": [
+        "AU-TASMANIA",
+        "CN-NINGXIA",
+        "ES-ISLAS-BALEARES",
+        "ID-PAPUA",
+        "NC",
+        "RU-VOLGA-FED-DISTRICT"
+      ],
+      "error": [],
+      "log_status": "success"
+    },
+    {
+      "chunk": 20,
+      "downloaded": [
+        "AU-VICTORIA",
+        "ID-SULAWESI",
+        "NE"
+      ],
+      "error": [
+        "CN-QINGHAI",
+        "ES-LA-RIOJA",
+        "RW"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 21,
+      "downloaded": [
+        "AU-WESTERN-AUSTRALIA",
+        "CN-SHAANXI",
+        "ID-SUMATRA",
+        "NG",
+        "SB"
+      ],
+      "error": [
+        "ES-MADRID"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 22,
+      "downloaded": [
+        "AZ",
+        "CN-SHANDONG",
+        "SC"
+      ],
+      "error": [
+        "ES-MELILLA",
+        "IE",
+        "NI"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 23,
+      "downloaded": [
+        "BA",
+        "CN-SHANGHAI",
+        "NL-DRENTHE",
+        "SD"
+      ],
+      "error": [
+        "ES-MURCIA",
+        "IN-CENTRAL-ZONE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 24,
+      "downloaded": [
+        "BD",
+        "CN-SHANXI",
+        "IN-EASTERN-ZONE",
+        "NL-FLEVOLAND",
+        "SE"
+      ],
+      "error": [
+        "ES-NAVARRA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 25,
+      "downloaded": [
+        "BE",
+        "CN-SICHUAN",
+        "NL-FRIESLAND"
+      ],
+      "error": [
+        "ES-PAIS-VASCO",
+        "IN-NORTH-EASTERN-ZONE",
+        "SH"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 26,
+      "downloaded": [
+        "CN-TIANJIN",
+        "NL-GELDERLAND",
+        "SI"
+      ],
+      "error": [
+        "BF",
+        "ES-VALENCIA",
+        "IN-NORTHERN-ZONE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 27,
+      "downloaded": [
+        "BG",
+        "CN-TIBET",
+        "ET",
+        "IN-SOUTHERN-ZONE",
+        "NL-GRONINGEN",
+        "SK"
+      ],
+      "error": [],
+      "log_status": "success"
+    },
+    {
+      "chunk": 28,
+      "downloaded": [
+        "BI",
+        "CN-XINJIANG",
+        "FI",
+        "IN-WESTERN-ZONE",
+        "NL-LIMBURG"
+      ],
+      "error": [
+        "SL"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 29,
+      "downloaded": [
+        "BJ",
+        "CN-YUNNAN",
+        "IQ",
+        "NL-NOORD-BRABANT"
+      ],
+      "error": [
+        "FJ",
+        "SN"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 30,
+      "downloaded": [
+        "CN-ZHEJIANG",
+        "FM",
+        "IR",
+        "NL-NOORD-HOLLAND"
+      ],
+      "error": [
+        "BO",
+        "SO"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 31,
+      "downloaded": [
+        "NL-OVERIJSSEL"
+      ],
+      "error": [
+        "BR-CENTRO-OESTE",
+        "CO",
+        "FO",
+        "IS",
+        "SR"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 32,
+      "downloaded": [
+        "FR-ALSACE",
+        "IT-CENTRO",
+        "NL-UTRECHT",
+        "SS"
+      ],
+      "error": [
+        "BR-NORDESTE",
+        "CR"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 33,
+      "downloaded": [
+        "IT-ISOLE",
+        "NL-ZEELAND",
+        "ST"
+      ],
+      "error": [
+        "BR-NORTE",
+        "CU",
+        "FR-AQUITAINE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 34,
+      "downloaded": [
+        "FR-AUVERGNE",
+        "IT-NORD-EST",
+        "NL-ZUID-HOLLAND"
+      ],
+      "error": [
+        "BR-SUDESTE",
+        "CV",
+        "SV"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 35,
+      "downloaded": [
+        "CY",
+        "IT-NORD-OVEST",
+        "NO-NORD-NORGE",
+        "SY"
+      ],
+      "error": [
+        "BR-SUL",
+        "FR-BASSE-NORMANDIE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 36,
+      "downloaded": [
+        "CZ-JIHOCESKY",
+        "FR-BOURGOGNE",
+        "IT-SUD",
+        "NO-OSTLANDET",
+        "SZ"
+      ],
+      "error": [
+        "BS"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 37,
+      "downloaded": [
+        "BT",
+        "CZ-JIHOMORAVSKY",
+        "NO-SORLANDET",
+        "TD"
+      ],
+      "error": [
+        "FR-BRETAGNE",
+        "JM"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 38,
+      "downloaded": [
+        "BW",
+        "CZ-KARLOVARSKY",
+        "FR-CENTRE",
+        "JO"
+      ],
+      "error": [
+        "NO-SVALBARD-JANMAYEN",
+        "TG"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 39,
+      "downloaded": [
+        "BY",
+        "CZ-KRALOVEHRADECKY",
+        "FR-CHAMPAGNE-ARDENNE",
+        "JP-CHUBU",
+        "NO-TRONDELAG"
+      ],
+      "error": [
+        "TH"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 40,
+      "downloaded": [
+        "CZ-LIBERECKY",
+        "FR-CORSE",
+        "JP-CHUGOKU",
+        "NO-VESTLANDET",
+        "TJ"
+      ],
+      "error": [
+        "BZ"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 41,
+      "downloaded": [
+        "CZ-MORAVSKOSLEZKY",
+        "FR-FRANCHE-COMTE",
+        "JP-HOKKAIDO",
+        "NP",
+        "TL"
+      ],
+      "error": [
+        "CA-ALBERTA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 42,
+      "downloaded": [
+        "CZ-OLOMOUCKY",
+        "JP-KANSAI",
+        "NR",
+        "TM"
+      ],
+      "error": [
+        "CA-BRITISH-COLUMBIA",
+        "FR-GUADELOUPE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 43,
+      "downloaded": [
+        "CZ-PARDUBICKY",
+        "JP-KANTO",
+        "TN"
+      ],
+      "error": [
+        "CA-MANITOBA",
+        "FR-GUYANE",
+        "NU"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 44,
+      "downloaded": [
+        "CZ-PLZENSKY",
+        "FR-HAUTE-NORMANDIE",
+        "JP-KYUSHU"
+      ],
+      "error": [
+        "CA-NEW-BRUNSWICK",
+        "NZ",
+        "TO"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 45,
+      "downloaded": [
+        "CZ-PRAHA",
+        "FR-ILE-DE-FRANCE",
+        "JP-SHIKOKU",
+        "TR"
+      ],
+      "error": [
+        "CA-NEWFOUNDLAND-AND-LABRADOR",
+        "PA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 46,
+      "downloaded": [
+        "CZ-STREDOCESKY",
+        "FR-LANGUEDOC-ROUSSILLON",
+        "JP-TOHOKU"
+      ],
+      "error": [
+        "CA-NORTHWEST-TERRITORIES",
+        "PE",
+        "TV"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 47,
+      "downloaded": [
+        "CZ-USTECKY",
+        "FR-LIMOUSIN",
+        "KE",
+        "PG",
+        "TW"
+      ],
+      "error": [
+        "CA-NOVA-SCOTIA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 48,
+      "downloaded": [
+        "CZ-VYSOCINA",
+        "FR-LORRAINE",
+        "KG",
+        "PH",
+        "TZ"
+      ],
+      "error": [
+        "CA-NUNAVUT"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 49,
+      "downloaded": [
+        "CZ-ZLINSKY",
+        "KH",
+        "PK",
+        "UA"
+      ],
+      "error": [
+        "CA-ONTARIO",
+        "FR-MARTINIQUE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 50,
+      "downloaded": [
+        "DE-BADEN-WUERTTEMBERG",
+        "FR-MAYOTTE",
+        "PL-DOLNOSLASKIE",
+        "UG"
+      ],
+      "error": [
+        "CA-PRINCE-EDWARD-ISLAND",
+        "KI"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 51,
+      "downloaded": [
+        "DE-BAYERN",
+        "KP",
+        "PL-KUJAWSKO-POMORSKIE"
+      ],
+      "error": [
+        "CA-QUEBEC",
+        "FR-MIDI-PYRENEES",
+        "US-ALASKA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 52,
+      "downloaded": [
+        "DE-BERLIN",
+        "FR-NORD-PAS-DE-CALAIS",
+        "KR",
+        "PL-LODZKIE"
+      ],
+      "error": [
+        "CA-SASKATCHEWAN"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 54,
+      "downloaded": [
+        "CD",
+        "DE-BREMEN",
+        "FR-PICARDIE",
+        "LA",
+        "PL-LUBUSKIE"
+      ],
+      "error": [
+        "US-HAWAII"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 55,
+      "downloaded": [
+        "CF",
+        "DE-HAMBURG",
+        "LB",
+        "PL-MALOPOLSKIE"
+      ],
+      "error": [
+        "FR-POITOU-CHARENTES"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 56,
+      "downloaded": [
+        "CG",
+        "DE-HESSEN",
+        "FR-PROVENCE-ALPES-COTE-D-AZUR",
+        "LI",
+        "PL-MAZOWIECKIE"
+      ],
+      "error": [
+        "UY"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 57,
+      "downloaded": [
+        "CH",
+        "DE-MECKLENBURG-VORPOMMERN",
+        "FR-REUNION",
+        "LK",
+        "PL-OPOLSKIE",
+        "UZ"
+      ],
+      "error": [],
+      "log_status": "success"
+    },
+    {
+      "chunk": 58,
+      "downloaded": [
+        "DE-NIEDERSACHSEN",
+        "FR-RHONE-ALPES",
+        "PL-PODKARPACKIE"
+      ],
+      "error": [
+        "CI",
+        "LR",
+        "VE"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 59,
+      "downloaded": [
+        "DE-NORDRHEIN-WESTFALEN",
+        "GA",
+        "LS",
+        "PL-PODLASKIE"
+      ],
+      "error": [
+        "CK",
+        "VI"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 60,
+      "downloaded": [
+        "DE-RHEINLAND-PFALZ",
+        "LT",
+        "PL-POMORSKIE",
+        "VN"
+      ],
+      "error": [
+        "CL",
+        "GB-BERMUDA"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 61,
+      "downloaded": [
+        "CM",
+        "DE-SAARLAND",
+        "LU",
+        "PL-SLASKIE"
+      ],
+      "error": [
+        "GB-ENGLAND",
+        "VU"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 62,
+      "downloaded": [
+        "CN-ANHUI",
+        "DE-SACHSEN",
+        "LV",
+        "PL-SWIETOKRZYSKIE"
+      ],
+      "error": [
+        "GB-FALKLANDS",
+        "WS"
+      ],
+      "log_status": "error"
+    },
+    {
+      "chunk": 63,
+      "downloaded": [
+        "CN-BEIJING",
+        "DE-SACHSEN-ANHALT",
+        "LY",
+        "PL-WARMINSKO-MAZURSKIE",
+        "YE"
+      ],
+      "error": [
+        "GB-SCOTLAND"
+      ],
+      "log_status": "error"
+    }
+  ]
+}
