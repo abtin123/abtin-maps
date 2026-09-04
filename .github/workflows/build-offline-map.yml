@@ -9,14 +9,14 @@ on:
         default: 'maps-v3'
         type: string
       countries_file:
-        description: 'Optional repository-relative JSON catalog; empty = all Geofabrik country/region extracts'
+        description: 'Optional repository-relative JSON catalog; empty = discovered Geofabrik catalog'
         required: false
         default: ''
         type: string
-      selector:
-        description: 'What to rebuild: IR, ALL, or ALL/IR (case-insensitive)'
+      country_selector:
+        description: 'IR, ALL, or ALL/IR/AZ/TR (slash-separated country exclusions)'
         required: false
-        default: 'all'
+        default: 'ALL'
         type: string
   schedule:
     - cron: '30 3 * * 1'
@@ -32,7 +32,7 @@ env:
   CHUNK_COUNT: 64
   RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v3' }}
   COUNTRIES_FILE: ${{ github.event.inputs.countries_file || '' }}
-  MAP_SELECTOR: ${{ github.event.inputs.selector || 'all' }}
+  COUNTRY_SELECTOR: ${{ github.event.inputs.country_selector || 'ALL' }}
 
 jobs:
   catalog:
@@ -94,6 +94,7 @@ jobs:
           set -euo pipefail
           mkdir -p previous dist patches old
           gh release download "$RELEASE_TAG" --pattern manifest.json --dir previous || true
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' > previous/assets.txt 2>/dev/null || true
       - name: Build selected catalog entries
         env:
           GH_TOKEN: ${{ github.token }}
@@ -106,8 +107,9 @@ jobs:
           else
             args+=(--countries-file "$GITHUB_WORKSPACE/catalog/map-catalog.json")
           fi
-          args+=(--selector "$MAP_SELECTOR")
           if [ -f previous/manifest.json ]; then args+=(--previous "$GITHUB_WORKSPACE/previous/manifest.json"); fi
+          if [ -f previous/assets.txt ]; then args+=(--existing-assets "$GITHUB_WORKSPACE/previous/assets.txt"); fi
+          args+=(--country-selector "$COUNTRY_SELECTOR")
           python3 tool/maps/build_all_maps.py "${args[@]}"
           python3 -m json.tool dist/manifest.json >/dev/null
           python3 -m json.tool dist/build-report.json >/dev/null
@@ -167,8 +169,19 @@ jobs:
       - name: Select authoritative expected catalog
         run: |
           set -euo pipefail
-          catalog="$(find chunk-output -name expected-catalog.json | sort | head -1)"
-          test -n "$catalog" && cp "$catalog" expected-catalog.json
+          # Always validate against the complete discovered catalog. The build
+          # selector controls what is rebuilt, not what already exists in the release.
+          python3 tool/maps/discover_map_catalog.py --output expected-entries.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          entries=json.loads(Path('expected-entries.json').read_text())
+          Path('expected-catalog.json').write_text(json.dumps({
+              'release_tag': '${{ env.RELEASE_TAG }}',
+              'count': len(entries),
+              'entries': entries,
+          }, ensure_ascii=False, indent=2)+'\n')
+          PY
       - name: Merge and prove that no country/region disappeared
         run: |
           set -euo pipefail
