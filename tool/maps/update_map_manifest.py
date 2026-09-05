@@ -38,24 +38,6 @@ def load_previous(path: Path | None) -> list[dict[str, object]]:
     return [entry for entry in countries if isinstance(entry, dict)]
 
 
-VECTOR_STYLE_RESOURCES = [
-    "sprites/abtin.json",
-    "sprites/abtin.png",
-    "sprites/abtin@2x.json",
-    "sprites/abtin@2x.png",
-    "search/places.sqlite",
-    "glyphs/Vazirmatn/0-255.pbf",
-    "glyphs/Vazirmatn/256-511.pbf",
-    "glyphs/Vazirmatn/1536-1791.pbf",
-    "glyphs/Vazirmatn/1792-2047.pbf",
-    "glyphs/Vazirmatn/8192-8447.pbf",
-    "glyphs/Vazirmatn/64256-64511.pbf",
-    "glyphs/Vazirmatn/64512-64767.pbf",
-    "glyphs/Vazirmatn/65024-65279.pbf",
-    "glyphs/Vazirmatn/65280-65535.pbf",
-]
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -126,9 +108,9 @@ def main() -> None:
         "patch": patch,
         "vector_map": {
             "embedded": True,
-            "day_style": "styles/day.json",
-            "night_style": "styles/night.json",
-            "resources": VECTOR_STYLE_RESOURCES,
+            "day_style": "assets/styles/offline_day.json",
+            "night_style": "assets/styles/offline_night.json",
+            "resources": [],
         },
     }
     if args.parts_manifest:
