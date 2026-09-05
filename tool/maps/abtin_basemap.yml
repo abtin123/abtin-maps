@@ -1,51 +1,21 @@
 schema_name: Abtin Basemap
-schema_description: Lean vector basemap with road labels and searchable POIs for the Abtin one-file container.
+schema_description: Lean vector basemap with road labels; searchable and navigation POIs live in the ABM graph/search data, not the rendered PMTiles.
 attribution: © OpenStreetMap contributors, ODbL 1.0
-version: 1.1.0
+version: 1.2.0
 is_overlay: false
 args:
   osm_path:
     description: Absolute OSM PBF input path.
     default: /data/input.osm.pbf
   minzoom: 2
-  # Planetiler 0.10.2 hard-caps tile-pyramid maxzoom at 16 (PlanetilerConfig
-  # throws IllegalArgumentException above that). The app's z2-20 zoom range
-  # is still achieved: MapLibre overzooms the z16 tiles for z17-20, per the
-  # source maxzoom declared in styles/day.json and night.json.
+  # Planetiler 0.10.2 hard-caps tile-pyramid maxzoom at 16. The app overzooms
+  # these z16 tiles through z20.
   maxzoom: 16
   force: true
 sources:
   osm:
     type: osm
     local_path: '${ args.osm_path }'
-definitions:
-  poi_filter: &poi_filter
-    amenity: [fuel, parking, bicycle_parking, hospital, clinic, doctors, pharmacy, police, school, college, university, kindergarten, restaurant, fast_food, food_court, cafe, ice_cream, bank, atm, place_of_worship, toilets, bus_station]
-    leisure: [park, garden, nature_reserve, pitch, sports_centre, stadium]
-    tourism: [hotel, motel, hostel, guest_house, apartment, attraction, museum, viewpoint, zoo, theme_park]
-    shop: [supermarket, convenience, department_store, mall, greengrocer]
-    highway: [bus_stop, speed_camera, traffic_signals]
-    aeroway: [aerodrome, airport]
-    historic: [monument, memorial, castle, archaeological_site]
-    traffic_calming: [bump, hump, table, cushion, chicane]
-    place: [city, town, village, suburb, neighbourhood, quarter, hamlet, locality]
-  poi_attributes: &poi_attributes
-    - key: class
-      value:
-        coalesce:
-          - tag_value: amenity
-          - tag_value: leisure
-          - tag_value: tourism
-          - tag_value: shop
-          - tag_value: highway
-          - tag_value: aeroway
-          - tag_value: historic
-          - tag_value: traffic_calming
-          - tag_value: place
-    - key: name
-      tag_value: name
-    - key: name_fa
-      tag_value: name:fa
 layers:
   - id: land
     features:
@@ -173,39 +143,3 @@ layers:
             include_when:
               tunnel: __any__
             else: false
-  - id: pois
-    features:
-      - source: osm
-        geometry: point
-        min_zoom:
-          default_value: 12
-          overrides:
-            11:
-              amenity: [hospital, bus_station]
-              aeroway: [aerodrome, airport]
-              place: [city, town]
-            12:
-              amenity: [fuel, pharmacy, police, bank, place_of_worship]
-              tourism: [hotel, attraction, museum]
-              leisure: [park, garden]
-        include_when: *poi_filter
-        exclude_when:
-          name: ''
-        attributes: *poi_attributes
-      - source: osm
-        geometry: polygon_point_on_surface
-        min_zoom:
-          default_value: 12
-          overrides:
-            11:
-              amenity: [hospital, bus_station]
-              aeroway: [aerodrome, airport]
-              place: [city, town]
-            12:
-              amenity: [fuel, pharmacy, police, bank, place_of_worship]
-              tourism: [hotel, attraction, museum]
-              leisure: [park, garden]
-        include_when: *poi_filter
-        exclude_when:
-          name: ''
-        attributes: *poi_attributes
