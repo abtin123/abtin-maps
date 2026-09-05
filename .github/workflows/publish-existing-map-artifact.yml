@@ -3,11 +3,6 @@ name: Publish existing map artifact
 on:
   workflow_dispatch:
     inputs:
-      run_id:
-        description: 'GitHub Actions run ID that already contains the built map artifact'
-        required: true
-        default: '92010749164'
-        type: string
       artifact_name:
         description: 'Artifact name to publish'
         required: true
@@ -21,18 +16,35 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
-  RUN_ID: ${{ inputs.run_id }}
   ARTIFACT_NAME: ${{ inputs.artifact_name }}
   RELEASE_TAG: ${{ inputs.release_tag }}
 
 jobs:
   publish:
-    name: Publish already-built map (no rebuild)
+    name: Publish latest already-built map (no rebuild)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Find latest successful build run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID="$(gh run list \
+            --workflow build-offline-map-fixed.yml \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID" || { echo 'No successful map build run found' >&2; exit 1; }
+          echo "Using latest successful map build run: $RUN_ID"
+          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+
       - name: Download existing artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,28 +54,39 @@ jobs:
           gh run download "$RUN_ID" -R "$GITHUB_REPOSITORY" -n "$ARTIFACT_NAME" -D artifact
           echo 'Downloaded files:'
           find artifact -type f -maxdepth 3 -printf '%p %s bytes\n'
-          test -n "$(find artifact -type f -name '*.abm' -print -quit)" || { echo 'No .abm file found in existing artifact' >&2; exit 1; }
+
+          map_count="$(find artifact -type f -name '*.abm' | wc -l)"
+          test "$map_count" -eq 1 || {
+            echo "Expected exactly one IR .abm in the selected artifact, found $map_count" >&2
+            exit 1
+          }
 
       - name: Prepare release files
         run: |
           set -euo pipefail
-          find artifact -type f \( -name '*.abm' -o -name 'manifest.json' -o -name 'build-report.json' -o -name '*.patch.json' -o -name '*.patch.bin' \) -exec cp -f {} release-dist/ \;
+          abm="$(find artifact -type f -name '*.abm' -print -quit)"
+          code="$(basename "$abm" .abm | tr '[:lower:]' '[:upper:]')"
+          test "$code" = "IR" || {
+            echo "Latest successful build artifact is not IR: $code" >&2
+            exit 1
+          }
+
+          cp -f "$abm" release-dist/IR.abm
+          for name in manifest.json build-report.json; do
+            f="$(find artifact -type f -name "$name" -print -quit)"
+            [ -n "$f" ] && cp -f "$f" release-dist/ || true
+          done
+          find artifact -type f \( -name '*.patch.json' -o -name '*.patch.bin' \) -exec cp -f {} release-dist/ \;
+
           echo 'Release files:'
           ls -lh release-dist
-          test -n "$(find release-dist -maxdepth 1 -type f -name '*.abm' -print -quit)"
 
-      - name: Verify existing ABM without rebuilding
+      - name: Verify existing IR ABM without rebuilding
         run: |
           set -euo pipefail
           chmod +x tool/maps/*.py tool/maps/*.sh || true
-          shopt -s nullglob
-          files=(release-dist/*.abm)
-          test "${#files[@]}" -gt 0
-          for f in "${files[@]}"; do
-            code="$(basename "$f" .abm)"
-            python3 tool/maps/verify_abm_container.py "$f" --region "$code" >/dev/null
-            echo "Verified: $f"
-          done
+          python3 tool/maps/verify_abm_container.py release-dist/IR.abm --region IR >/dev/null
+          echo 'Verified: release-dist/IR.abm'
 
       - name: Create or update release
         env:
@@ -73,13 +96,14 @@ jobs:
           if ! gh release view "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" \
               --title 'Abtin Offline Maps' \
-              --notes 'Published from an already-built GitHub Actions artifact; no map rebuild was performed.'
+              --notes 'Published from the latest successful IR map build artifact; no map rebuild was performed.'
           fi
-          files=(release-dist/*.abm)
+
+          files=(release-dist/IR.abm)
           shopt -s nullglob
           files+=(release-dist/manifest.json release-dist/build-report.json release-dist/*.patch.json release-dist/*.patch.bin)
           existing=()
           for f in "${files[@]}"; do [ -f "$f" ] && existing+=("$f"); done
           test "${#existing[@]}" -gt 0
           gh release upload "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" "${existing[@]}" --clobber
-          echo "Published existing artifact to release $RELEASE_TAG"
+          echo "Published existing IR artifact from build run $RUN_ID to release $RELEASE_TAG"
