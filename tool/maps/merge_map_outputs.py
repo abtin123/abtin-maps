@@ -17,12 +17,13 @@ def main()->int:
   prev=json.loads(a.previous.read_text(encoding='utf-8'))
   entries={str(x['code']).upper():x for x in prev.get('countries',[]) if isinstance(x,dict) and x.get('code')}
  successes=[]; failures=[]
- for rp in sorted(a.input_root.glob('*/build-report.json')):
+ # Artifacts are uploaded with both `dist/` and `patches/` directories, so
+ # download-artifact recreates that nesting under chunk-output/map-dist-N/.
+ # Use recursive lookup instead of assuming manifest.json is one level deep.
+ for rp in sorted(a.input_root.rglob('build-report.json')):
   r=json.loads(rp.read_text(encoding='utf-8'));successes.extend(r.get('successes',[]));failures.extend(r.get('failures',[]))
- # In normal mode, never publish an incomplete release. In partial mode,
- # publish only verified current outputs and expose every failure in the report.
  if failures and not a.allow_partial: raise SystemExit(f"Cannot publish: {len(failures)} map builds failed")
- for mp in sorted(a.input_root.glob('*/manifest.json')):
+ for mp in sorted(a.input_root.rglob('manifest.json')):
   data=json.loads(mp.read_text(encoding='utf-8'))
   chunk_dir=mp.parent
   for item in data.get('countries',[]):
@@ -43,8 +44,6 @@ def main()->int:
     if archive.stat().st_size>=MAX_RELEASE_ASSET_BYTES: raise SystemExit(f'{code}.abm is >=2GiB')
     shutil.copy2(archive,a.output/archive.name);copied=True
    if copied: entries[code]=item
- # Validate every expected code and source signature. An unchanged map may be
- # inherited from the previous release; a changed one must have been rebuilt.
  missing=[];stale=[]
  for code,want in expected_by.items():
   got=entries.get(code)
@@ -55,7 +54,6 @@ def main()->int:
   if missing: raise SystemExit('Missing expected maps: '+', '.join(missing[:50]))
   if stale: raise SystemExit('Stale maps detected: '+', '.join(stale[:50]))
  if a.allow_partial:
-  # Do not expose an old/stale entry as if it were freshly built.
   for code in set(missing + stale): entries.pop(code, None)
   countries=[entries[k] for k in sorted(entries) if k in expected_by and k not in stale]
  else:
