@@ -24,10 +24,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: offline-map-release-${{ github.event.inputs.release_tag || 'maps-v3' }}
-  cancel-in-progress: false
-
 env:
   RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v3' }}
   COUNTRIES_FILE: ${{ github.event.inputs.countries_file || '' }}
@@ -35,10 +31,10 @@ env:
 
 jobs:
   catalog:
-    name: Discover complete Geofabrik catalog
+    name: Discover selected Geofabrik catalog
     runs-on: ubuntu-24.04
     outputs:
-      count: ${{ steps.catalog.outputs.count }}
+      count: ${{ steps.catalog.outputs.selected_count }}
       chunks: ${{ steps.catalog.outputs.chunks }}
       chunk_count: ${{ steps.catalog.outputs.chunk_count }}
     steps:
@@ -53,10 +49,9 @@ jobs:
           set -euo pipefail
           python3 tool/maps/discover_map_catalog.py --output /tmp/map-catalog.json
           python3 -m json.tool /tmp/map-catalog.json >/dev/null
-          echo "count=$(python3 -c 'import json;print(len(json.load(open("/tmp/map-catalog.json"))))')" >> "$GITHUB_OUTPUT"
           selector="${COUNTRY_SELECTOR:-ALL}"
           python3 - "$selector" <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os, sys
+          import json, sys
           entries=json.load(open('/tmp/map-catalog.json', encoding='utf-8'))
           selector=sys.argv[1].strip().upper()
           tokens=[x.strip() for x in selector.split('/') if x.strip()]
@@ -74,6 +69,7 @@ jobs:
           print('chunks='+json.dumps(list(range(chunk_count)), separators=(',',':')))
           print(f'selected_count={len(entries)}')
           print(f'chunk_count={chunk_count}')
+          print(f'selected_codes={json.dumps([str(e.get("code", "")).upper() for e in entries], separators=(",", ":"))}')
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -171,10 +167,8 @@ jobs:
           retention-days: 3
 
   merge-and-publish:
-    name: Verify complete catalog and publish
-    needs: build-chunk
-    # Publish verified successes even when one or more countries fail.
-    # The report and manifest mark the release as partial in that case.
+    name: Verify selected catalog and publish
+    needs: [catalog, build-chunk]
     if: ${{ always() && (needs.build-chunk.result == 'success' || needs.build-chunk.result == 'failure') }}
     runs-on: ubuntu-24.04
     steps:
@@ -190,23 +184,36 @@ jobs:
         run: |
           mkdir -p previous release-dist
           gh release download "$RELEASE_TAG" --pattern manifest.json --dir previous || true
-      - name: Select authoritative expected catalog
+      - name: Select expected catalog using the same country selector
         run: |
           set -euo pipefail
-          # Always validate against the complete discovered catalog. The build
-          # selector controls what is rebuilt, not what already exists in the release.
           python3 tool/maps/discover_map_catalog.py --output expected-entries.json
-          python3 - <<'PY'
-          import json
+          python3 - "$COUNTRY_SELECTOR" <<'PY'
+          import json, sys
           from pathlib import Path
-          entries=json.loads(Path('expected-entries.json').read_text())
+          entries=json.loads(Path('expected-entries.json').read_text(encoding='utf-8'))
+          selector=sys.argv[1].strip().upper()
+          tokens=[x.strip() for x in selector.split('/') if x.strip()]
+          if not tokens:
+              raise SystemExit('country-selector is empty')
+          if tokens[0]=='ALL':
+              excluded=set(tokens[1:])
+              entries=[e for e in entries if str(e.get('country_code','')).upper() not in excluded and str(e.get('code','')).upper() not in excluded]
+          else:
+              wanted=set(tokens)
+              entries=[e for e in entries if str(e.get('country_code','')).upper() in wanted or str(e.get('code','')).upper() in wanted]
+          if not entries:
+              raise SystemExit(f'country-selector matched no catalog entries: {selector}')
           Path('expected-catalog.json').write_text(json.dumps({
               'release_tag': '${{ env.RELEASE_TAG }}',
               'count': len(entries),
               'entries': entries,
-          }, ensure_ascii=False, indent=2)+'\n')
+              'selector': selector,
+          }, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          print(f'Expected selected maps: {len(entries)} for selector {selector}')
+          print('Codes:', ', '.join(str(e.get('code','')).upper() for e in entries))
           PY
-      - name: Merge and prove that no country/region disappeared
+      - name: Merge and verify selected maps
         run: |
           set -euo pipefail
           python3 tool/maps/merge_map_outputs.py \
@@ -246,7 +253,7 @@ jobs:
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --title "Abtin Offline Maps" --notes "Complete country/region offline maps; weekly source update with block-level map patches."
+            gh release create "$RELEASE_TAG" --title "Abtin Offline Maps" --notes "Selected country/region offline maps; weekly source update with block-level map patches."
           fi
           files=(release-dist/manifest.json release-dist/build-report.json)
           shopt -s nullglob
