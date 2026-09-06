@@ -41,7 +41,7 @@ def encode(b,c):
  if c==3:
   import brotli; return brotli.compress(b)
  if c==4:
-  import zstandard; return zstandard.ZstdCompressor(level=10).compress(b)
+  import zstandard; return zstandard.ZstdCompressor(level=19).compress(b)
  raise SystemExit(f"Unsupported metadata compression {c}")
 def read_pmtiles(p:Path)->Parts:
  if not p.is_file():raise SystemExit(f"PMTiles archive does not exist: {p}")
@@ -62,10 +62,26 @@ def resource_arg(raw:str):
  if not internal or internal.startswith('/') or any(x in ('','.','..') for x in parts):raise argparse.ArgumentTypeError(f'unsafe resource path: {internal}')
  return internal,Path(local)
 
+def normalize_style(raw:bytes)->bytes:
+ """Normalize the embedded client contract to zoom 2-16 and compact JSON.
+
+    The repository style files may contain legacy client metadata, but the ABM
+    itself is authoritative. No z17-20 tiles are generated or requested.
+    """
+ s=json.loads(raw.decode())
+ if not isinstance(s,dict): raise SystemExit('Style must be a JSON object')
+ meta=s.setdefault('metadata',{}).setdefault('abtin',{})
+ if isinstance(meta,dict): meta['max_zoom']=16
+ src=s.setdefault('sources',{}).setdefault('abtin',{})
+ if isinstance(src,dict):
+  src['minzoom']=2
+  src['maxzoom']=16
+ return json.dumps(s,ensure_ascii=False,separators=(',',':'),sort_keys=True).encode()
+
 def build(a):
  p=read_pmtiles(a.pmtiles)
- if not a.graph.is_file() or not a.graph.read_bytes().startswith(ABM_MAGIC):raise SystemExit(f'Graph must be a valid ABTINMAP segment: {a.graph}')
- if not a.search_index.is_file():raise SystemExit(f'Search index is missing: {a.search_index}')
+ if not a.graph.is_file() or not a.graph.read_bytes().startswith(ABM_MAGIC):raise SystemExit(f"Graph must be a valid ABTINMAP segment: {a.graph}")
+ if not a.search_index.is_file():raise SystemExit(f"Search index is missing: {a.search_index}")
  resources={'styles/day.json':a.day_style,'styles/night.json':a.night_style}
  for raw in a.resource:
   k,v=resource_arg(raw);resources[k]=v
@@ -73,8 +89,8 @@ def build(a):
  if missing:raise SystemExit('Missing required ABM resources: '+', '.join(missing))
  payloads=[('graph',a.graph.read_bytes()),('search/places.sqlite',a.search_index.read_bytes())]
  payloads += [(k,resources[k].read_bytes()) for k in REQUIRED if k not in ('styles/day.json','styles/night.json')]
- payloads.insert(2,('styles/day.json',resources['styles/day.json'].read_bytes()))
- payloads.insert(3,('styles/night.json',resources['styles/night.json'].read_bytes()))
+ payloads.insert(2,('styles/day.json',normalize_style(resources['styles/day.json'].read_bytes())))
+ payloads.insert(3,('styles/night.json',normalize_style(resources['styles/night.json'].read_bytes())))
  root_off=HEADER_SIZE; leaf_off=root_off+len(p.root); tile_off=leaf_off+len(p.leaf); cursor=tile_off+len(p.tiles)
  graph_info=None; entries=[]
  for name,data in payloads:
@@ -82,7 +98,7 @@ def build(a):
   if name=='graph':graph_info=item
   else:entries.append({'path':name,**item})
   cursor+=len(data)
- metadata=dict(p.metadata);metadata['abtin_container']={'version':1,'region':a.region.upper(),'contracts':{'pmtiles_minzoom':2,'pmtiles_maxzoom':16,'app_overzoom_maxzoom':20,'offline_search':'search/places.sqlite','rendered_pois':False,'styles':'embedded'},'graph':graph_info,'entries':entries}
+ metadata=dict(p.metadata);metadata['abtin_container']={'version':1,'region':a.region.upper(),'contracts':{'pmtiles_minzoom':2,'pmtiles_maxzoom':16,'app_overzoom_maxzoom':16,'offline_search':'search/places.sqlite','rendered_pois':False,'styles':'embedded'},'graph':graph_info,'entries':entries}
  meta=encode(json.dumps(metadata,ensure_ascii=False,separators=(',',':'),sort_keys=True).encode(),p.compression); meta_off=cursor
  head=bytearray(p.header);struct.pack_into('<QQ',head,8,root_off,len(p.root));struct.pack_into('<QQ',head,24,meta_off,len(meta));struct.pack_into('<QQ',head,40,leaf_off,len(p.leaf));struct.pack_into('<QQ',head,56,tile_off,cursor-tile_off)
  a.output.parent.mkdir(parents=True,exist_ok=True);fd,tmp=tempfile.mkstemp(prefix='.'+a.output.name+'.',suffix='.part',dir=a.output.parent)
