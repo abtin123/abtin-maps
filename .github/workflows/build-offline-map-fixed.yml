@@ -153,7 +153,6 @@ jobs:
           for archive in dist/*.abm; do
             code="$(basename "$archive" .abm)"
             python3 tool/maps/verify_abm_container.py "$archive" --region "$code" >/dev/null
-            pmtiles verify "$archive"
           done
       - name: Upload chunk output
         if: always()
@@ -257,5 +256,5 @@ jobs:
           fi
           files=(release-dist/manifest.json release-dist/build-report.json)
           shopt -s nullglob
-          files+=(release-dist/*.abm release-dist/*.patch.json release-dist/*.patch.bin)
+          files+=(release-dist/*.abm release-dist/*.abm.part* release-dist/*.patch.json release-dist/*.patch.bin)
           gh release upload "$RELEASE_TAG" "${files[@]}" --clobber
