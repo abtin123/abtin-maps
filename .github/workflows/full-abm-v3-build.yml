@@ -1,0 +1,120 @@
+name: Full ABM v3 build and verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      country_selector:
+        description: 'ALL, IR, or slash-separated codes/exclusions such as ALL/IR/AZ'
+        required: false
+        default: 'ALL'
+        type: string
+      release_tag:
+        description: 'Existing release tag used as build state'
+        required: false
+        default: 'maps-v3'
+        type: string
+  schedule:
+    - cron: '45 3 * * 1'
+
+permissions:
+  contents: write
+
+env:
+  COUNTRY_SELECTOR: ${{ github.event.inputs.country_selector || 'ALL' }}
+  RELEASE_TAG: ${{ github.event.inputs.release_tag || 'maps-v3' }}
+
+jobs:
+  build-and-verify:
+    name: Build and verify selected ABM maps
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install map build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool
+          python -m pip install --upgrade pip
+          python -m pip install osmium zstandard brotli
+          PMTILES_URL='https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_x86_64.tar.gz'
+          curl --fail --location --retry 8 --retry-all-errors --retry-delay 10 --retry-max-time 600 "$PMTILES_URL" -o /tmp/go-pmtiles.tar.gz
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf /tmp/go-pmtiles.tar.gz -C /tmp
+          install -m 755 /tmp/pmtiles "$HOME/.local/bin/pmtiles"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pmtiles version
+          osmium --version
+      - name: Fetch previous manifest and release asset list
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p previous dist
+          gh release download "$RELEASE_TAG" --pattern manifest.json --dir previous || true
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' > previous/assets.txt 2>/dev/null || true
+      - name: Build complete selected catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          chmod +x tool/maps/*.sh tool/maps/*.py
+          python3 tool/maps/discover_map_catalog.py --output catalog.json
+          python3 - "$COUNTRY_SELECTOR" <<'PY'
+          import json,sys
+          from pathlib import Path
+          entries=json.loads(Path('catalog.json').read_text())
+          sel=sys.argv[1].strip().upper()
+          tokens=[x.strip() for x in sel.split('/') if x.strip()]
+          if not tokens: raise SystemExit('country-selector is empty')
+          if tokens[0]=='ALL':
+              ex=set(tokens[1:]); entries=[e for e in entries if str(e.get('country_code','')).upper() not in ex and str(e.get('code','')).upper() not in ex]
+          else:
+              want=set(tokens); entries=[e for e in entries if str(e.get('country_code','')).upper() in want or str(e.get('code','')).upper() in want]
+          if not entries: raise SystemExit('country-selector matched no catalog entries: '+sel)
+          Path('selected-catalog.json').write_text(json.dumps(entries,ensure_ascii=False,indent=2)+'\n')
+          print(f'Selected {len(entries)} maps for {sel}')
+          PY
+          args=(--root "$GITHUB_WORKSPACE" --output "$GITHUB_WORKSPACE/dist" --release-tag "$RELEASE_TAG" --countries-file "$GITHUB_WORKSPACE/selected-catalog.json" --chunk-index 0 --chunk-count 1 --country-selector "$COUNTRY_SELECTOR")
+          if [ -f previous/manifest.json ]; then args+=(--previous "$GITHUB_WORKSPACE/previous/manifest.json"); fi
+          if [ -f previous/assets.txt ]; then args+=(--existing-assets "$GITHUB_WORKSPACE/previous/assets.txt"); fi
+          python3 tool/maps/build_all_maps.py "${args[@]}"
+      - name: Verify every ABM container
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/*.abm)
+          test "${#files[@]}" -gt 0
+          for archive in "${files[@]}"; do
+            code="$(basename "$archive" .abm)"
+            echo "=== VERIFY $code ==="
+            python3 tool/maps/verify_abm_container.py "$archive" --region "$code"
+          done
+      - name: Validate manifest and ABM inventory
+        run: |
+          set -euo pipefail
+          python3 -m json.tool dist/manifest.json >/dev/null
+          python3 -m json.tool dist/build-report.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('dist/manifest.json').read_text())
+          files={p.stem for p in Path('dist').glob('*.abm')}
+          failed=m.get('failures',[])
+          if failed: raise SystemExit(f'Build failures reported: {len(failed)}')
+          print(f'ABM files produced: {len(files)}')
+          print('ABM codes:', ', '.join(sorted(files)))
+          PY
+      - name: Upload complete build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: abm-v3-full-build
+          path: |
+            dist/
+            selected-catalog.json
+          if-no-files-found: warn
+          retention-days: 7
