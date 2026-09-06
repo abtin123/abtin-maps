@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds one offline country as a single CC.abm container.
+# Builds one offline country as a single CC.abm container and a maximum-compression CC.abm.zip distribution copy.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CODE="${1:?Usage: build_country_abm.sh CC <pbf-url-or-path> <output-directory> [bbox]}"
@@ -8,7 +8,7 @@ OUT_DIR="${3:?Usage: build_country_abm.sh CC <pbf-url-or-path> <output-directory
 BBOX="${4:-}"
 if [[ "$BBOX" == --bbox=* ]]; then BBOX="${BBOX#--bbox=}"; fi
 CODE="${CODE^^}"
-mkdir -p "$OUT_DIR"; OUT_DIR="$(cd "$OUT_DIR" && pwd)"; WORK_DIR="$OUT_DIR/work-$CODE"; ARCHIVE="$OUT_DIR/$CODE.abm"
+mkdir -p "$OUT_DIR"; OUT_DIR="$(cd "$OUT_DIR" && pwd)"; WORK_DIR="$OUT_DIR/work-$CODE"; ARCHIVE="$OUT_DIR/$CODE.abm"; ZIP_ARCHIVE="$OUT_DIR/$CODE.abm.zip"
 command -v docker >/dev/null || { echo "Docker is required for Planetiler." >&2; exit 2; }
 command -v pmtiles >/dev/null || { echo "pmtiles CLI is required." >&2; exit 2; }
 rm -rf "$WORK_DIR"; mkdir -p "$WORK_DIR"; trap 'rm -rf "$WORK_DIR"' EXIT
@@ -33,8 +33,11 @@ python3 "$ROOT/tool/maps/build_abm_graph.py" --pbf "$WORK_DIR/input.osm.pbf" --o
 python3 "$ROOT/tool/maps/verify_abm_graph.py" "$WORK_DIR/graph.abm"
 python3 "$ROOT/tool/maps/build_search_index.py" --pbf "$WORK_DIR/input.osm.pbf" --output "$WORK_DIR/search.sqlite"
 python3 "$ROOT/tool/maps/pack_abm_container.py" --region "$CODE" --pmtiles "$WORK_DIR/vector.pmtiles" --graph "$WORK_DIR/graph.abm" --search-index "$WORK_DIR/search.sqlite" --day-style "$WORK_DIR/day.json" --night-style "$WORK_DIR/night.json" "${resource_args[@]}" --output "$ARCHIVE"
-# Do not run pmtiles cluster/verify on the final ABM: its custom payload is
-# deliberately appended after PMTiles tile data. The strict ABM verifier is
-# the authoritative final validation.
 python3 "$ROOT/tool/maps/verify_abm_container.py" "$ARCHIVE" --region "$CODE"
-printf 'Built single country archive: %s\n' "$ARCHIVE"; sha256sum "$ARCHIVE"
+# Keep the canonical .abm untouched for direct/offline use. Also create a
+# deterministic maximum-compression ZIP distribution copy. ZIP is applied
+# only after ABM verification so compression can never hide a corrupt map.
+python3 "$ROOT/tool/maps/zip_abm.py" --input "$ARCHIVE" --output "$ZIP_ARCHIVE"
+printf 'Built single country archive: %s\n' "$ARCHIVE"
+printf 'Built compressed distribution: %s\n' "$ZIP_ARCHIVE"
+sha256sum "$ARCHIVE" "$ZIP_ARCHIVE"
