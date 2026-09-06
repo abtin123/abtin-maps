@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build the offline SQLite FTS5 search index embedded in an ABM container.
+"""Build the lean offline road/city search index embedded in an ABM container.
 
-The index deliberately contains named places/POIs and named roads from the same
-PBF used by Planetiler and the routing graph, so offline search never depends on
-an external geocoder.  It is a compact read-only database once embedded.
+POIs are intentionally NOT indexed here. The ABM map is kept lean by storing
+only named roads plus named settlements (city/town/village/hamlet). This keeps
+offline road/place search available without adding hundreds of thousands of
+amenity/shop/tourism POI records.
 """
 from __future__ import annotations
 
@@ -13,6 +14,14 @@ import sqlite3
 from pathlib import Path
 
 import osmium
+
+
+ROAD_CLASSES = {
+    "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
+    "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
+    "residential", "living_street", "service", "track",
+}
+SETTLEMENTS = {"city", "town", "village", "hamlet", "isolated_dwelling"}
 
 
 class SearchCollector(osmium.SimpleHandler):
@@ -47,18 +56,18 @@ class SearchCollector(osmium.SimpleHandler):
         name = self._name(tags)
         if not name:
             return
-        if tags.get("place") or tags.get("amenity") or tags.get("tourism") or tags.get("shop") or tags.get("highway") or tags.get("public_transport"):
+
+        # Deliberately exclude amenity/shop/tourism/public_transport POIs.
+        # Only settlements are kept as searchable non-road places.
+        place = str(tags.get("place") or "").strip().lower()
+        if place in SETTLEMENTS:
             self._add(name, self._region(tags), node.location.lon, node.location.lat, "place")
 
     def way(self, way: object) -> None:
         tags = way.tags
         name = self._name(tags)
         highway = str(tags.get("highway") or "").strip().lower()
-        if not name or highway not in {
-            "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
-            "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified",
-            "residential", "living_street", "service", "track",
-        }:
+        if not name or highway not in ROAD_CLASSES:
             return
         points = [(n.lon, n.lat) for n in way.nodes if n.location.valid()]
         if not points:
@@ -93,9 +102,10 @@ def build(pbf: Path, output: Path) -> None:
         db.execute("CREATE VIRTUAL TABLE places_fts USING fts5(name, region, latitude UNINDEXED, longitude UNINDEXED, kind UNINDEXED, tokenize='unicode61 remove_diacritics 2')")
         db.executemany("INSERT INTO places_fts(name,region,latitude,longitude,kind) VALUES(?,?,?,?,?)", rows)
         db.executemany("INSERT INTO meta(key,value) VALUES(?,?)", [
-            ("schema", "abtin-search/1"),
+            ("schema", "abtin-search/2-lean-no-poi"),
             ("source_sha256", sha256(pbf)),
             ("rows", str(len(rows))),
+            ("poi_indexed", "0"),
         ])
         db.commit()
         db.execute("VACUUM")
@@ -103,7 +113,7 @@ def build(pbf: Path, output: Path) -> None:
     finally:
         db.close()
     tmp.replace(output)
-    print(f"Search index created: {output} rows={len(rows)} sha256={sha256(output)}")
+    print(f"Lean search index created: {output} rows={len(rows)} sha256={sha256(output)} (POIs excluded)")
 
 
 def main() -> int:
@@ -115,6 +125,7 @@ def main() -> int:
         raise SystemExit(f"PBF not found: {a.pbf}")
     build(a.pbf, a.output)
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
