@@ -3,7 +3,12 @@
 from __future__ import annotations
 import argparse,hashlib,json,os
 from pathlib import Path
-MAX_PART=2*1024**3-16*1024**2
+
+# Keep individual release assets comfortably below GitHub's practical asset-size
+# ceiling and, more importantly, split maps such as Iran that are already around
+# 1 GB into multiple downloadable parts. The parts are byte-for-byte slices of
+# the canonical ABM and are reassembled by the app using the parts manifest.
+MAX_PART=900*1024**2
 
 def sha(p:Path)->str:
  h=hashlib.sha256()
@@ -24,7 +29,7 @@ def main()->int:
    out=a.output_dir/f'{a.code}.abm.part{i}';tmp=out.with_suffix(out.suffix+'.part')
    with tmp.open('wb') as dst:dst.write(data);dst.flush();os.fsync(dst.fileno())
    tmp.replace(out);parts.append({'name':out.name,'size':out.stat().st_size,'sha256':sha(out)});i+=1
- a.archive.unlink()
  meta=a.output_dir/f'{a.code}.parts.json';meta.write_text(json.dumps({'code':a.code,'total_size':sum(x['size'] for x in parts),'parts':parts,'sha256':None},ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+ a.archive.unlink()
  print(json.dumps({'split':True,'parts':parts,'manifest':meta.name}));return 0
 if __name__=='__main__':raise SystemExit(main())
