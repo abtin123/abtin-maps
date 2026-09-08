@@ -1,0 +1,380 @@
+chunk,code,archive,status,reason
+0,AD,AD.abm,downloaded,
+0,CN-CHONGQING,CN-CHONGQING.abm,downloaded,
+0,DE-SCHLESWIG-HOLSTEIN,DE-SCHLESWIG-HOLSTEIN.abm,downloaded,
+0,GB-WALES,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+0,MA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+0,PL-WIELKOPOLSKIE,PL-WIELKOPOLSKIE.abm,downloaded,
+0,ZA,ZA.abm,downloaded,
+1,AF,AF.abm,downloaded,
+1,CN-FUJIAN,CN-FUJIAN.abm,downloaded,
+1,DE-THUERINGEN,DE-THUERINGEN.abm,downloaded,
+1,GE,GE.abm,downloaded,
+1,MC,MC.abm,downloaded,
+1,PL-ZACHODNIOPOMORSKIE,PL-ZACHODNIOPOMORSKIE.abm,downloaded,
+1,ZM,ZM.abm,downloaded,
+2,AL,AL.abm,downloaded,
+2,CN-GANSU,CN-GANSU.abm,downloaded,
+2,DJ,DJ.abm,downloaded,
+2,GF,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+2,MD,MD.abm,downloaded,
+2,PR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+2,ZW,ZW.abm,downloaded,
+3,AM,AM.abm,downloaded,
+3,CN-GUANGDONG,CN-GUANGDONG.abm,downloaded,
+3,DK,DK.abm,downloaded,
+3,GH,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+3,ME,ME.abm,downloaded,
+3,PS,PS.abm,downloaded,
+4,AO,AO.abm,downloaded,
+4,CN-GUANGXI,CN-GUANGXI.abm,downloaded,
+4,DZ,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+4,GL,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+4,MG,MG.abm,downloaded,
+4,PT,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+5,AQ,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+5,CN-GUIZHOU,CN-GUIZHOU.abm,downloaded,
+5,EC,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+5,GN,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+5,MH,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+5,PW,PW.abm,downloaded,
+6,AR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+6,CN-HAINAN,CN-HAINAN.abm,downloaded,
+6,EE,EE.abm,downloaded,
+6,GQ,GQ.abm,downloaded,
+6,MK,MK.abm,downloaded,
+6,PY,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+7,AT,AT.abm,downloaded,
+7,CN-HEBEI,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+7,EG,EG.abm,downloaded,
+7,GR,GR.abm,downloaded,
+7,ML,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+7,QA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+8,AU-ACT,AU-ACT.abm,downloaded,
+8,CN-HEILONGJIANG,CN-HEILONGJIANG.abm,downloaded,
+8,ER,ER.abm,downloaded,
+8,GT,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+8,MM,MM.abm,downloaded,
+8,RO,RO.abm,downloaded,
+9,AU-ASHMORE-CARTIER,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+9,CN-HENAN,CN-HENAN.abm,downloaded,
+9,ES-ANDALUCIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+9,GW,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+9,MN,MN.abm,downloaded,
+9,RS,RS.abm,downloaded,
+10,AU-CHRISTMAS-ISLAND,AU-CHRISTMAS-ISLAND.abm,downloaded,
+10,CN-HONG-KONG,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+10,ES-ARAGON,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+10,GY,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+10,MR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+10,RU-CENTRAL-FED-DISTRICT,RU-CENTRAL-FED-DISTRICT.abm,downloaded,
+11,AU-COCOS-ISLANDS,AU-COCOS-ISLANDS.abm,downloaded,
+11,CN-HUBEI,CN-HUBEI.abm,downloaded,
+11,ES-ASTURIAS,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+11,HN,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+11,MT,MT.abm,downloaded,
+11,RU-CRIMEAN-FED-DISTRICT,RU-CRIMEAN-FED-DISTRICT.abm,downloaded,
+12,AU-CORAL-SEA-ISLANDS,AU-CORAL-SEA-ISLANDS.abm,downloaded,
+12,CN-HUNAN,CN-HUNAN.abm,downloaded,
+12,ES-CANTABRIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+12,HR,HR.abm,downloaded,
+12,MU,MU.abm,downloaded,
+12,RU-FAR-EASTERN-FED-DISTRICT,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+13,AU-HEARD-MCDONALD,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+13,CN-INNER-MONGOLIA,CN-INNER-MONGOLIA.abm,downloaded,
+13,ES-CASTILLA-LA-MANCHA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+13,HT,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+13,MV,MV.abm,downloaded,
+13,RU-KALININGRAD,RU-KALININGRAD.abm,downloaded,
+14,AU-NEW-SOUTH-WALES,AU-NEW-SOUTH-WALES.abm,downloaded,
+14,CN-JIANGSU,CN-JIANGSU.abm,downloaded,
+14,ES-CASTILLA-Y-LEON,,error,chunk/job failed; see build log
+14,HU,HU.abm,downloaded,
+14,MW,MW.abm,downloaded,
+14,RU-NORTH-CAUCASUS-FED-DISTRICT,,error,chunk/job failed; see build log
+15,AU-NORFOLK-ISLAND,AU-NORFOLK-ISLAND.abm,downloaded,
+15,CN-JIANGXI,CN-JIANGXI.abm,downloaded,
+15,ES-CATALUNA,ES-CATALUNA.abm,downloaded,
+15,ID-JAVA,ID-JAVA.abm,downloaded,
+15,MX,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+15,RU-NORTHWESTERN-FED-DISTRICT,RU-NORTHWESTERN-FED-DISTRICT.abm,downloaded,
+16,AU-NORTHERN-TERRITORY,AU-NORTHERN-TERRITORY.abm,downloaded,
+16,CN-JILIN,CN-JILIN.abm,downloaded,
+16,ES-CEUTA,,error,chunk/job failed; see build log
+16,ID-KALIMANTAN,ID-KALIMANTAN.abm,downloaded,
+16,MY,MY.abm,downloaded,
+16,RU-SIBERIAN-FED-DISTRICT,RU-SIBERIAN-FED-DISTRICT.abm,downloaded,
+17,AU-QUEENSLAND,AU-QUEENSLAND.abm,downloaded,
+17,CN-LIAONING,CN-LIAONING.abm,downloaded,
+17,ES-EXTREMADURA,,error,chunk/job failed; see build log
+17,ID-MALUKU,ID-MALUKU.abm,downloaded,
+17,MZ,MZ.abm,downloaded,
+17,RU-SOUTH-FED-DISTRICT,,error,chunk/job failed; see build log
+18,AU-SOUTH-AUSTRALIA,AU-SOUTH-AUSTRALIA.abm,downloaded,
+18,CN-MACAU,CN-MACAU.abm,downloaded,
+18,ES-GALICIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+18,ID-NUSA-TENGGARA,ID-NUSA-TENGGARA.abm,downloaded,
+18,NA,NA.abm,downloaded,
+18,RU-URAL-FED-DISTRICT,RU-URAL-FED-DISTRICT.abm,downloaded,
+19,AU-TASMANIA,AU-TASMANIA.abm,downloaded,
+19,CN-NINGXIA,CN-NINGXIA.abm,downloaded,
+19,ES-ISLAS-BALEARES,ES-ISLAS-BALEARES.abm,downloaded,
+19,ID-PAPUA,ID-PAPUA.abm,downloaded,
+19,NC,NC.abm,downloaded,
+19,RU-VOLGA-FED-DISTRICT,RU-VOLGA-FED-DISTRICT.abm,downloaded,
+20,AU-VICTORIA,AU-VICTORIA.abm,downloaded,
+20,CN-QINGHAI,,error,chunk/job failed; see build log
+20,ES-LA-RIOJA,,error,chunk/job failed; see build log
+20,ID-SULAWESI,ID-SULAWESI.abm,downloaded,
+20,NE,NE.abm,downloaded,
+20,RW,,error,chunk/job failed; see build log
+21,AU-WESTERN-AUSTRALIA,AU-WESTERN-AUSTRALIA.abm,downloaded,
+21,CN-SHAANXI,CN-SHAANXI.abm,downloaded,
+21,ES-MADRID,,error,chunk/job failed; see build log
+21,ID-SUMATRA,ID-SUMATRA.abm,downloaded,
+21,NG,NG.abm,downloaded,
+21,SB,SB.abm,downloaded,
+22,AZ,AZ.abm,downloaded,
+22,CN-SHANDONG,CN-SHANDONG.abm,downloaded,
+22,ES-MELILLA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+22,IE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+22,NI,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+22,SC,SC.abm,downloaded,
+23,BA,BA.abm,downloaded,
+23,CN-SHANGHAI,CN-SHANGHAI.abm,downloaded,
+23,ES-MURCIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+23,IN-CENTRAL-ZONE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+23,NL-DRENTHE,NL-DRENTHE.abm,downloaded,
+23,SD,SD.abm,downloaded,
+24,BD,BD.abm,downloaded,
+24,CN-SHANXI,CN-SHANXI.abm,downloaded,
+24,ES-NAVARRA,,error,chunk/job failed; see build log
+24,IN-EASTERN-ZONE,IN-EASTERN-ZONE.abm,downloaded,
+24,NL-FLEVOLAND,NL-FLEVOLAND.abm,downloaded,
+24,SE,SE.abm,downloaded,
+25,BE,BE.abm,downloaded,
+25,CN-SICHUAN,CN-SICHUAN.abm,downloaded,
+25,ES-PAIS-VASCO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+25,IN-NORTH-EASTERN-ZONE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+25,NL-FRIESLAND,NL-FRIESLAND.abm,downloaded,
+25,SH,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+26,BF,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+26,CN-TIANJIN,CN-TIANJIN.abm,downloaded,
+26,ES-VALENCIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+26,IN-NORTHERN-ZONE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+26,NL-GELDERLAND,NL-GELDERLAND.abm,downloaded,
+26,SI,SI.abm,downloaded,
+27,BG,BG.abm,downloaded,
+27,CN-TIBET,CN-TIBET.abm,downloaded,
+27,ET,ET.abm,downloaded,
+27,IN-SOUTHERN-ZONE,IN-SOUTHERN-ZONE.abm,downloaded,
+27,NL-GRONINGEN,NL-GRONINGEN.abm,downloaded,
+27,SK,SK.abm,downloaded,
+28,BI,BI.abm,downloaded,
+28,CN-XINJIANG,CN-XINJIANG.abm,downloaded,
+28,FI,FI.abm,downloaded,
+28,IN-WESTERN-ZONE,IN-WESTERN-ZONE.abm,downloaded,
+28,NL-LIMBURG,NL-LIMBURG.abm,downloaded,
+28,SL,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+29,BJ,BJ.abm,downloaded,
+29,CN-YUNNAN,CN-YUNNAN.abm,downloaded,
+29,FJ,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+29,IQ,IQ.abm,downloaded,
+29,NL-NOORD-BRABANT,NL-NOORD-BRABANT.abm,downloaded,
+29,SN,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+30,BO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+30,CN-ZHEJIANG,CN-ZHEJIANG.abm,downloaded,
+30,FM,FM.abm,downloaded,
+30,IR,IR.abm,downloaded,
+30,NL-NOORD-HOLLAND,NL-NOORD-HOLLAND.abm,downloaded,
+30,SO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+31,BR-CENTRO-OESTE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+31,CO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+31,FO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+31,IS,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+31,NL-OVERIJSSEL,NL-OVERIJSSEL.abm,downloaded,
+31,SR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+32,BR-NORDESTE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+32,CR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+32,FR-ALSACE,FR-ALSACE.abm,downloaded,
+32,IT-CENTRO,IT-CENTRO.abm,downloaded,
+32,NL-UTRECHT,NL-UTRECHT.abm,downloaded,
+32,SS,SS.abm,downloaded,
+33,BR-NORTE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+33,CU,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+33,FR-AQUITAINE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+33,IT-ISOLE,IT-ISOLE.abm,downloaded,
+33,NL-ZEELAND,NL-ZEELAND.abm,downloaded,
+33,ST,ST.abm,downloaded,
+34,BR-SUDESTE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+34,CV,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+34,FR-AUVERGNE,FR-AUVERGNE.abm,downloaded,
+34,IT-NORD-EST,IT-NORD-EST.abm,downloaded,
+34,NL-ZUID-HOLLAND,NL-ZUID-HOLLAND.abm,downloaded,
+34,SV,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+35,BR-SUL,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+35,CY,CY.abm,downloaded,
+35,FR-BASSE-NORMANDIE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+35,IT-NORD-OVEST,IT-NORD-OVEST.abm,downloaded,
+35,NO-NORD-NORGE,NO-NORD-NORGE.abm,downloaded,
+35,SY,SY.abm,downloaded,
+36,BS,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+36,CZ-JIHOCESKY,CZ-JIHOCESKY.abm,downloaded,
+36,FR-BOURGOGNE,FR-BOURGOGNE.abm,downloaded,
+36,IT-SUD,IT-SUD.abm,downloaded,
+36,NO-OSTLANDET,NO-OSTLANDET.abm,downloaded,
+36,SZ,SZ.abm,downloaded,
+37,BT,BT.abm,downloaded,
+37,CZ-JIHOMORAVSKY,CZ-JIHOMORAVSKY.abm,downloaded,
+37,FR-BRETAGNE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+37,JM,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+37,NO-SORLANDET,NO-SORLANDET.abm,downloaded,
+37,TD,TD.abm,downloaded,
+38,BW,BW.abm,downloaded,
+38,CZ-KARLOVARSKY,CZ-KARLOVARSKY.abm,downloaded,
+38,FR-CENTRE,FR-CENTRE.abm,downloaded,
+38,JO,JO.abm,downloaded,
+38,NO-SVALBARD-JANMAYEN,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+38,TG,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+39,BY,BY.abm,downloaded,
+39,CZ-KRALOVEHRADECKY,CZ-KRALOVEHRADECKY.abm,downloaded,
+39,FR-CHAMPAGNE-ARDENNE,FR-CHAMPAGNE-ARDENNE.abm,downloaded,
+39,JP-CHUBU,JP-CHUBU.abm,downloaded,
+39,NO-TRONDELAG,NO-TRONDELAG.abm,downloaded,
+39,TH,,error,chunk/job failed; see build log
+40,BZ,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+40,CZ-LIBERECKY,CZ-LIBERECKY.abm,downloaded,
+40,FR-CORSE,FR-CORSE.abm,downloaded,
+40,JP-CHUGOKU,JP-CHUGOKU.abm,downloaded,
+40,NO-VESTLANDET,NO-VESTLANDET.abm,downloaded,
+40,TJ,TJ.abm,downloaded,
+41,CA-ALBERTA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+41,CZ-MORAVSKOSLEZKY,CZ-MORAVSKOSLEZKY.abm,downloaded,
+41,FR-FRANCHE-COMTE,FR-FRANCHE-COMTE.abm,downloaded,
+41,JP-HOKKAIDO,JP-HOKKAIDO.abm,downloaded,
+41,NP,NP.abm,downloaded,
+41,TL,TL.abm,downloaded,
+42,CA-BRITISH-COLUMBIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+42,CZ-OLOMOUCKY,CZ-OLOMOUCKY.abm,downloaded,
+42,FR-GUADELOUPE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+42,JP-KANSAI,JP-KANSAI.abm,downloaded,
+42,NR,NR.abm,downloaded,
+42,TM,TM.abm,downloaded,
+43,CA-MANITOBA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+43,CZ-PARDUBICKY,CZ-PARDUBICKY.abm,downloaded,
+43,FR-GUYANE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+43,JP-KANTO,JP-KANTO.abm,downloaded,
+43,NU,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+43,TN,TN.abm,downloaded,
+44,CA-NEW-BRUNSWICK,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+44,CZ-PLZENSKY,CZ-PLZENSKY.abm,downloaded,
+44,FR-HAUTE-NORMANDIE,FR-HAUTE-NORMANDIE.abm,downloaded,
+44,JP-KYUSHU,JP-KYUSHU.abm,downloaded,
+44,NZ,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+44,TO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+45,CA-NEWFOUNDLAND-AND-LABRADOR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+45,CZ-PRAHA,CZ-PRAHA.abm,downloaded,
+45,FR-ILE-DE-FRANCE,FR-ILE-DE-FRANCE.abm,downloaded,
+45,JP-SHIKOKU,JP-SHIKOKU.abm,downloaded,
+45,PA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+45,TR,TR.abm,downloaded,
+46,CA-NORTHWEST-TERRITORIES,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+46,CZ-STREDOCESKY,CZ-STREDOCESKY.abm,downloaded,
+46,FR-LANGUEDOC-ROUSSILLON,FR-LANGUEDOC-ROUSSILLON.abm,downloaded,
+46,JP-TOHOKU,JP-TOHOKU.abm,downloaded,
+46,PE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+46,TV,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+47,CA-NOVA-SCOTIA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+47,CZ-USTECKY,CZ-USTECKY.abm,downloaded,
+47,FR-LIMOUSIN,FR-LIMOUSIN.abm,downloaded,
+47,KE,KE.abm,downloaded,
+47,PG,PG.abm,downloaded,
+47,TW,TW.abm,downloaded,
+48,CA-NUNAVUT,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+48,CZ-VYSOCINA,CZ-VYSOCINA.abm,downloaded,
+48,FR-LORRAINE,FR-LORRAINE.abm,downloaded,
+48,KG,KG.abm,downloaded,
+48,PH,PH.abm,downloaded,
+48,TZ,TZ.abm,downloaded,
+49,CA-ONTARIO,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+49,CZ-ZLINSKY,CZ-ZLINSKY.abm,downloaded,
+49,FR-MARTINIQUE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+49,KH,KH.abm,downloaded,
+49,PK,PK.abm,downloaded,
+49,UA,UA.abm,downloaded,
+50,CA-PRINCE-EDWARD-ISLAND,,error,chunk/job failed; see build log
+50,DE-BADEN-WUERTTEMBERG,DE-BADEN-WUERTTEMBERG.abm,downloaded,
+50,FR-MAYOTTE,FR-MAYOTTE.abm,downloaded,
+50,KI,,error,chunk/job failed; see build log
+50,PL-DOLNOSLASKIE,PL-DOLNOSLASKIE.abm,downloaded,
+50,UG,UG.abm,downloaded,
+51,CA-QUEBEC,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+51,DE-BAYERN,DE-BAYERN.abm,downloaded,
+51,FR-MIDI-PYRENEES,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+51,KP,KP.abm,downloaded,
+51,PL-KUJAWSKO-POMORSKIE,PL-KUJAWSKO-POMORSKIE.abm,downloaded,
+51,US-ALASKA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+52,CA-SASKATCHEWAN,,error,chunk/job failed; see build log
+52,DE-BERLIN,DE-BERLIN.abm,downloaded,
+52,FR-NORD-PAS-DE-CALAIS,FR-NORD-PAS-DE-CALAIS.abm,downloaded,
+52,KR,KR.abm,downloaded,
+52,PL-LODZKIE,PL-LODZKIE.abm,downloaded,
+54,CD,CD.abm,downloaded,
+54,DE-BREMEN,DE-BREMEN.abm,downloaded,
+54,FR-PICARDIE,FR-PICARDIE.abm,downloaded,
+54,LA,LA.abm,downloaded,
+54,PL-LUBUSKIE,PL-LUBUSKIE.abm,downloaded,
+54,US-HAWAII,,error,chunk/job failed; see build log
+55,CF,CF.abm,downloaded,
+55,DE-HAMBURG,DE-HAMBURG.abm,downloaded,
+55,FR-POITOU-CHARENTES,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+55,LB,LB.abm,downloaded,
+55,PL-MALOPOLSKIE,PL-MALOPOLSKIE.abm,downloaded,
+56,CG,CG.abm,downloaded,
+56,DE-HESSEN,DE-HESSEN.abm,downloaded,
+56,FR-PROVENCE-ALPES-COTE-D-AZUR,FR-PROVENCE-ALPES-COTE-D-AZUR.abm,downloaded,
+56,LI,LI.abm,downloaded,
+56,PL-MAZOWIECKIE,PL-MAZOWIECKIE.abm,downloaded,
+56,UY,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+57,CH,CH.abm,downloaded,
+57,DE-MECKLENBURG-VORPOMMERN,DE-MECKLENBURG-VORPOMMERN.abm,downloaded,
+57,FR-REUNION,FR-REUNION.abm,downloaded,
+57,LK,LK.abm,downloaded,
+57,PL-OPOLSKIE,PL-OPOLSKIE.abm,downloaded,
+57,UZ,UZ.abm,downloaded,
+58,CI,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+58,DE-NIEDERSACHSEN,DE-NIEDERSACHSEN.abm,downloaded,
+58,FR-RHONE-ALPES,FR-RHONE-ALPES.abm,downloaded,
+58,LR,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+58,PL-PODKARPACKIE,PL-PODKARPACKIE.abm,downloaded,
+58,VE,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+59,CK,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+59,DE-NORDRHEIN-WESTFALEN,DE-NORDRHEIN-WESTFALEN.abm,downloaded,
+59,GA,GA.abm,downloaded,
+59,LS,LS.abm,downloaded,
+59,PL-PODLASKIE,PL-PODLASKIE.abm,downloaded,
+59,VI,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+60,CL,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+60,DE-RHEINLAND-PFALZ,DE-RHEINLAND-PFALZ.abm,downloaded,
+60,GB-BERMUDA,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+60,LT,LT.abm,downloaded,
+60,PL-POMORSKIE,PL-POMORSKIE.abm,downloaded,
+60,VN,VN.abm,downloaded,
+61,CM,CM.abm,downloaded,
+61,DE-SAARLAND,DE-SAARLAND.abm,downloaded,
+61,GB-ENGLAND,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+61,LU,LU.abm,downloaded,
+61,PL-SLASKIE,PL-SLASKIE.abm,downloaded,
+61,VU,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+62,CN-ANHUI,CN-ANHUI.abm,downloaded,
+62,DE-SACHSEN,DE-SACHSEN.abm,downloaded,
+62,GB-FALKLANDS,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+62,LV,LV.abm,downloaded,
+62,PL-SWIETOKRZYSKIE,PL-SWIETOKRZYSKIE.abm,downloaded,
+62,WS,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+63,CN-BEIJING,CN-BEIJING.abm,downloaded,
+63,DE-SACHSEN-ANHALT,DE-SACHSEN-ANHALT.abm,downloaded,
+63,GB-SCOTLAND,,error,update_map_manifest.py: --bbox received a negative value as a separate argument
+63,LY,LY.abm,downloaded,
+63,PL-WARMINSKO-MAZURSKIE,PL-WARMINSKO-MAZURSKIE.abm,downloaded,
+63,YE,YE.abm,downloaded,
