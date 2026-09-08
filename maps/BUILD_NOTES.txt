@@ -1,8 +1,0 @@
-AbtinMaps clean project
-
-Build validation:
-- Flutter 3.35.1 / Dart 3.9.0
-- Android SDK 36 / JDK 21
-- Release APK target: android-arm64
-- The private signing key and local signing properties were intentionally excluded.
-- To build a signed release, provide your own android/key.properties and keystore.
