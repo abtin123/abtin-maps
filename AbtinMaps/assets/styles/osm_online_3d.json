@@ -1,0 +1,32 @@
+{
+  "version": 8,
+  "name": "Abtin Maps Online 3D (resilient)",
+  "sprite": "",
+  "glyphs": "{ABM_GLYPHS}",
+  "sources": {
+    "openfreemap": {
+      "type": "vector",
+      "tiles": ["https://tiles.openfreemap.org/planet/{z}/{x}/{y}.pbf"],
+      "minzoom": 0,
+      "maxzoom": 18
+    },
+    "raster-fallback": {
+      "type": "raster",
+      "tiles": [
+        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+      ],
+      "tileSize": 256,
+      "maxzoom": 20
+    }
+  },
+  "layers": [
+    {"id": "background", "type": "background", "paint": {"background-color": "#edf1f4"}},
+    {"id": "raster-fallback-layer", "type": "raster", "source": "raster-fallback", "minzoom": 0, "maxzoom": 20},
+    {"id": "water", "type": "fill", "source": "openfreemap", "source-layer": "water", "paint": {"fill-color": "#b6dcf2"}},
+    {"id": "landcover", "type": "fill", "source": "openfreemap", "source-layer": "landcover", "paint": {"fill-color": "#dcebd7"}},
+    {"id": "roads", "type": "line", "source": "openfreemap", "source-layer": "transportation", "paint": {"line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.7, 12, 2.4, 16, 6.0]}},
+    {"id": "buildings", "type": "fill-extrusion", "source": "openfreemap", "source-layer": "building", "minzoom": 13, "paint": {"fill-extrusion-color": "#c7c2ba", "fill-extrusion-height": ["coalesce", ["get", "render_height"], ["get", "height"], 8], "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], ["get", "min_height"], 0], "fill-extrusion-opacity": 0.88}}
+  ]
+}

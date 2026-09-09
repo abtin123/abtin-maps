@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "maps": [
+    {
+      "id": "US",
+      "asset": "assets/maps/US.abm",
+      "version": "a9f927e2a9577febbd8d988edc7b03553a5666f45f34a15af28bfaec928f672c"
+    }
+  ]
+}
