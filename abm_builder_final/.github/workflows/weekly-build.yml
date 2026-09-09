@@ -1,0 +1,149 @@
+name: Weekly ABM rebuild (all countries)
+on:
+  schedule:
+    - cron: '17 2 * * 1'   # every Monday 02:17 UTC - rebuilds every country in countries.json
+  workflow_dispatch:
+    inputs:
+      country:
+        description: >
+          Optional: ISO country code to rebuild ONLY that one (for a quick
+          manual test/hotfix). Leave empty to rebuild every country in
+          countries.json, same as the scheduled run.
+        required: false
+        default: ''
+      publish:
+        description: 'Publish the result to the maps-v4 GitHub Release'
+        required: false
+        default: 'false'
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set
+        run: |
+          python3 - << 'PYEOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          countries = json.load(open('countries.json'))
+          only = os.environ.get('ONLY_COUNTRY', '').strip().upper()
+          codes = [only] if only else sorted(countries.keys())
+          matrix = []
+          for code in codes:
+              c = countries[code]
+              matrix.append({
+                  'code': code,
+                  'pbf_url': c['pbf_url'],
+                  'regions_config': c.get('regions_config', ''),
+              })
+          print('matrix=' + json.dumps({'include': matrix}))
+          PYEOF
+        env:
+          ONLY_COUNTRY: ${{ inputs.country }}
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false   # one broken country must not cancel the other 36+
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -r requirements.txt
+      - run: mkdir -p work dist
+      - name: Download OSM extract for ${{ matrix.code }}
+        run: curl -L --fail --retry 3 "${{ matrix.pbf_url }}" -o work/country.osm.pbf
+
+      - name: Build whole-country ABM
+        if: ${{ matrix.regions_config == '' }}
+        run: python build_abm.py work/country.osm.pbf --country "${{ matrix.code }}" --output "dist/${{ matrix.code }}.abm"
+
+      - name: Build per-region ABM archives (large country)
+        if: ${{ matrix.regions_config != '' }}
+        run: python build_abm.py work/country.osm.pbf --country "${{ matrix.code }}" --regions "${{ matrix.regions_config }}" --output dist/
+
+      - name: Split any archive over the GitHub Release asset cap
+        run: |
+          for abm in dist/*.abm; do
+            [ -e "$abm" ] || continue
+            code=$(basename "$abm" .abm)
+            size=$(stat -c%s "$abm")
+            if [ "$size" -gt 1932735283 ]; then  # ~1.8 GiB
+              python packaging/split_abm.py split "$abm" --output "dist/$code-parts"
+            fi
+          done
+
+      - name: Download previous release archives for delta patches
+        run: |
+          mkdir -p work/previous
+          for abm in dist/*.abm; do
+            [ -e "$abm" ] || continue
+            code=$(basename "$abm" .abm)
+            gh release download maps-v4 --pattern "$code.abm" --dir work/previous || true
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create delta patches where a previous release exists
+        run: |
+          for abm in dist/*.abm; do
+            [ -e "$abm" ] || continue
+            code=$(basename "$abm" .abm)
+            if [ -f "work/previous/$code.abm" ]; then
+              python packaging/create_patch.py "work/previous/$code.abm" "$abm" --code "$code" --output "dist/$code-patch"
+            else
+              echo "No previous archive for $code; full ABM will be published."
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.code }}
+          path: dist/
+
+  manifest:
+    needs: build
+    if: always()   # still assemble whatever succeeded, even if one country failed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Merge every country's artifact into one dist/
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: merged
+          merge-multiple: false
+      - run: |
+          mkdir -p dist
+          # each dist-<CODE> artifact unpacks to merged/dist-<CODE>/... ; flatten it
+          for d in merged/dist-*; do
+            cp -rn "$d"/* dist/ 2>/dev/null || true
+          done
+          ls -la dist
+      - name: Build release manifest.json
+        run: python packaging/build_release_manifest.py dist --release-tag maps-v4 --names countries.json --output dist/manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abtinmaps-release
+          path: dist/
+
+  publish:
+    needs: manifest
+    if: ${{ github.event_name == 'schedule' || inputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: {name: abtinmaps-release, path: dist}
+      - name: Publish/update the maps-v4 release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: maps-v4
+          files: dist/**
+          fail_on_unmatched_files: false
