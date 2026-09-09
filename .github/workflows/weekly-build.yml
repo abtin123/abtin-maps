@@ -46,6 +46,7 @@ jobs:
   build:
     needs: discover
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     strategy:
       fail-fast: false   # one broken country must not cancel the other 36+
       matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
@@ -107,7 +108,7 @@ jobs:
 
   manifest:
     needs: build
-    if: always()   # still assemble whatever succeeded, even if one country failed
+    if: ${{ always() && needs.build.result != 'cancelled' }}   # merge successful artifacts; do not mask a cancelled build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -146,4 +147,4 @@ jobs:
         with:
           tag_name: maps-v4
           files: dist/**
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
