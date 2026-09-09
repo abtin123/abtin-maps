@@ -67,6 +67,14 @@ jobs:
         if: ${{ matrix.regions_config != '' }}
         run: python build_abm.py work/country.osm.pbf --country "${{ matrix.code }}" --regions "${{ matrix.regions_config }}" --output dist/
 
+      - name: Verify build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Build completed for ${{ matrix.code }}"
+          find dist -maxdepth 2 -type f -name '*.abm' -print -exec stat -c '%n %s bytes' {} \\;
+          test -n "$(find dist -maxdepth 1 -type f -name '*.abm' -print -quit)"
+
       - name: Split any archive over the GitHub Release asset cap
         run: |
           for abm in dist/*.abm; do
@@ -108,8 +116,12 @@ jobs:
 
   manifest:
     needs: build
-    if: ${{ always() && needs.build.result != 'cancelled' }}   # merge successful artifacts; do not mask a cancelled build
+    # A cancelled build cannot have a complete release. For failed builds we
+    # still aggregate any country artifacts that finished successfully.
+    if: ${{ always() && needs.build.result != 'cancelled' }}
     runs-on: ubuntu-latest
+    outputs:
+      has_artifacts: ${{ steps.check.outputs.has_artifacts }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -120,15 +132,38 @@ jobs:
           pattern: dist-*
           path: merged
           merge-multiple: false
-      - run: |
+      - name: Merge and check artifacts
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
           mkdir -p dist
-          # each dist-<CODE> artifact unpacks to merged/dist-<CODE>/... ; flatten it
+          # Each dist-<CODE> artifact unpacks to merged/dist-<CODE>/...
+          found=0
+          shopt -s nullglob
           for d in merged/dist-*; do
-            cp -rn "$d"/* dist/ 2>/dev/null || true
+            [ -d "$d" ] || continue
+            for f in "$d"/*.abm "$d"/*-patch* "$d"/*-parts*; do
+              [ -e "$f" ] || continue
+              cp -rn "$f" dist/ 2>/dev/null || true
+            done
           done
-          ls -la dist
+          if find dist -maxdepth 1 -type f -name '*.abm' -print -quit | grep -q .; then
+            found=1
+          fi
+          echo "has_artifacts=$found" >> "$GITHUB_OUTPUT"
+          echo "Release ABM artifacts present: $found"
+          find dist -maxdepth 2 -type f -printf '%p %s bytes\\n' | sort || true
+
       - name: Build release manifest.json
+        if: ${{ steps.check.outputs.has_artifacts == '1' }}
         run: python packaging/build_release_manifest.py dist --release-tag maps-v4 --names countries.json --output dist/manifest.json
+
+      - name: No completed country artifacts
+        if: ${{ steps.check.outputs.has_artifacts != '1' }}
+        run: |
+          echo "No completed .abm artifacts were produced; skipping manifest/release publication."
+          exit 0
       - uses: actions/upload-artifact@v4
         with:
           name: abtinmaps-release
@@ -136,7 +171,7 @@ jobs:
 
   publish:
     needs: manifest
-    if: ${{ github.event_name == 'schedule' || inputs.publish == 'true' }}
+    if: ${{ needs.manifest.result == 'success' && needs.manifest.outputs.has_artifacts == '1' && (github.event_name == 'schedule' || inputs.publish == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
