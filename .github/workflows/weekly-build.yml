@@ -11,10 +11,6 @@ on:
           countries.json, same as the scheduled run.
         required: false
         default: ''
-      publish:
-        description: 'Publish the result to the maps-v4 GitHub Release'
-        required: false
-        default: 'false'
 
 jobs:
   discover:
@@ -171,7 +167,7 @@ jobs:
 
   publish:
     needs: manifest
-    if: ${{ needs.manifest.result == 'success' && needs.manifest.outputs.has_artifacts == '1' && (github.event_name == 'schedule' || inputs.publish == 'true') }}
+    if: ${{ needs.manifest.result == 'success' && needs.manifest.outputs.has_artifacts == '1' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
