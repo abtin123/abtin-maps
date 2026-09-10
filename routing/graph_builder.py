@@ -229,7 +229,7 @@ def build_graph_from_pbf(path: Path, out: Path, bbox: tuple[float, float, float,
     class Handler(osmium.SimpleHandler):
         def way(self, o):
             nonlocal next_edge, way_count
-            tags = {str(k): str(v) for k, v in o.tags.items()}
+            tags = tags_dict(o)
             if tags.get("highway") not in ROAD_CLASSES:
                 return
             points = []
@@ -260,7 +260,7 @@ def build_graph_from_pbf(path: Path, out: Path, bbox: tuple[float, float, float,
                 con.commit()
 
         def relation(self, o):
-            tags = {str(k): str(v) for k, v in o.tags.items()}
+            tags = tags_dict(o)
             kind = tags.get("restriction", "")
             if tags.get("type") != "restriction" and not kind.startswith(("only_", "no_")):
                 return
