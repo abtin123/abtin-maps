@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Build completed for ${{ matrix.code }}"
-          find dist -maxdepth 2 -type f -name '*.abm' -print -exec stat -c '%n %s bytes' {} \\;
+          find dist -maxdepth 2 -type f -name '*.abm' -print -exec stat -c '%n %s bytes' {} \;
           test -n "$(find dist -maxdepth 1 -type f -name '*.abm' -print -quit)"
 
       - name: Split any archive over the GitHub Release asset cap
