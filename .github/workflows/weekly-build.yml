@@ -1,86 +1,129 @@
-name: Weekly ABM Build + Delta Update
+name: ABM World Weekly Build + Delta
 
 on:
-  schedule:
-    - cron: "0 2 * * 1"
   workflow_dispatch:
     inputs:
-      region:
-        description: "Region to build"
-        required: false
-        default: "IR"
+      target:
+        description: "all | all/IR | IR"
+        required: true
+        default: "all"
+
+  schedule:
+    - cron: "0 2 * * 1"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-abm:
+  resolve:
     runs-on: ubuntu-latest
 
-    env:
-      REGION: IR
-      PYTHONUNBUFFERED: "1"
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - id: resolve
+        shell: bash
+        run: |
+          TARGET="${{ github.event.inputs.target || 'all' }}"
+
+          python3 scripts/resolve_build_targets.py \
+            --target "$TARGET" \
+            --output build-matrix.json
+
+          echo "matrix=$(cat build-matrix.json)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: resolve
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Restore previous ABM cache
-        uses: actions/cache@v4
-        with:
-          path: previous/
-          key: abm-previous-${{ env.REGION }}
-
-      - name: Download latest OSM data
+      - name: Check previous manifest
+        id: state
+        shell: bash
         run: |
-          python tools/update_osm.py --region $REGION
+          python3 scripts/check_build_state.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}" \
+            --output state.json
+
+          cat state.json
+
+      - name: Download OSM source
+        if: steps.state.outputs.needs_build == 'true'
+        run: |
+          python3 scripts/update_osm.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}"
 
       - name: Build ABM
+        if: steps.state.outputs.needs_build == 'true'
         run: |
-          python build_abm.py \
-            --region $REGION \
+          python3 build_abm.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}" \
             --memory-safe \
-            --stream-routing \
-            --output release/${REGION}.abm
+            --stream-routing
 
       - name: Validate ABM
+        if: steps.state.outputs.needs_build == 'true'
         run: |
-          python validate_abm.py release/${REGION}.abm
+          python3 validate_abm.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}"
 
-      - name: Build Delta Patch
+      - name: Build Delta
+        if: steps.state.outputs.needs_delta == 'true'
         run: |
-          python packaging/create_patch.py \
-            --old previous/${REGION}.abm \
-            --new release/${REGION}.abm \
-            --output release/${REGION}.patch
+          python3 packaging/create_patch.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}"
 
-      - name: Create manifest
+      - name: Resolve country flag
+        if: steps.state.outputs.needs_build == 'true'
+        shell: bash
         run: |
-          python packaging/build_release_manifest.py \
-            --abm release/${REGION}.abm \
-            --patch release/${REGION}.patch \
-            --output release/${REGION}.manifest.json
+          FLAG="assets/flags/$(echo '${{ matrix.country }}' | tr '[:upper:]' '[:lower:]').webp"
 
-      - name: Save current version
+          test -f "$FLAG" || {
+            echo "Missing local country flag: $FLAG"
+            exit 1
+          }
+
+          echo "FLAG=$FLAG" >> "$GITHUB_ENV"
+
+      - name: Build manifest
+        if: steps.state.outputs.needs_build == 'true'
         run: |
-          mkdir -p previous
-          cp release/${REGION}.abm previous/${REGION}.abm
+          python3 packaging/build_release_manifest.py \
+            --country "${{ matrix.country }}" \
+            --region "${{ matrix.region }}" \
+            --flag "$FLAG"
 
-      - name: Upload ABM Release
+      - name: Upload release
+        if: steps.state.outputs.needs_build == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: abm-${{ env.REGION }}
+          name: abm-${{ matrix.country }}-${{ matrix.region }}
           path: |
-            release/*.abm
-            release/*.patch
-            release/*.manifest.json
+            release/**
