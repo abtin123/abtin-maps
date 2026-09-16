@@ -1,181 +1,144 @@
-name: Weekly ABM rebuild (all countries)
+name: Build and publish incremental map updates
+
 on:
   schedule:
-    - cron: '17 2 * * 1'   # every Monday 02:17 UTC - rebuilds every country in countries.json
+    - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
       country:
-        description: >
-          Optional: ISO country code to rebuild ONLY that one (for a quick
-          manual test/hotfix). Leave empty to rebuild every country in
-          countries.json, same as the scheduled run.
+        description: 'Country code to build, or all'
         required: false
-        default: ''
+        default: 'all'
+      publish:
+        description: 'Publish assets to the maps-v4 release'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: maps-v4
+  PYTHONUNBUFFERED: '1'
 
 jobs:
   discover:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set.outputs.matrix }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - id: set
-        run: |
-          python3 - << 'PYEOF' >> "$GITHUB_OUTPUT"
-          import json, os
-          countries = json.load(open('countries.json'))
-          only = os.environ.get('ONLY_COUNTRY', '').strip().upper()
-          codes = [only] if only else sorted(countries.keys())
-          matrix = []
-          for code in codes:
-              c = countries[code]
-              matrix.append({
-                  'code': code,
-                  'pbf_url': c['pbf_url'],
-                  'regions_config': c.get('regions_config', ''),
-              })
-          print('matrix=' + json.dumps({'include': matrix}))
-          PYEOF
+      - id: matrix
         env:
-          ONLY_COUNTRY: ${{ inputs.country }}
+          REQUESTED_COUNTRY: ${{ inputs.country || 'all' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          data = json.load(open('countries.json', encoding='utf-8'))
+          requested = os.environ.get('REQUESTED_COUNTRY', 'all').strip().upper()
+          codes = sorted(data) if requested in ('', 'ALL') else [requested]
+          unknown = [c for c in codes if c not in data]
+          if unknown:
+              raise SystemExit(f'Unknown country code(s): {unknown}')
+          print('matrix=' + json.dumps({'country': codes}, separators=(',', ':')))
+          PY
 
   build:
     needs: discover
     runs-on: ubuntu-latest
-    timeout-minutes: 360
     strategy:
-      fail-fast: false   # one broken country must not cancel the other 36+
+      fail-fast: false
       matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - run: pip install -r requirements.txt
-      - run: mkdir -p work dist
-      - name: Download OSM extract for ${{ matrix.code }}
-        run: curl -L --fail --retry 3 "${{ matrix.pbf_url }}" -o work/country.osm.pbf
-
-      - name: Build whole-country ABM
-        if: ${{ matrix.regions_config == '' }}
-        run: python build_abm.py work/country.osm.pbf --country "${{ matrix.code }}" --output "dist/${{ matrix.code }}.abm"
-
-      - name: Build per-region ABM archives (large country)
-        if: ${{ matrix.regions_config != '' }}
-        run: python build_abm.py work/country.osm.pbf --country "${{ matrix.code }}" --regions "${{ matrix.regions_config }}" --output dist/
-
-      - name: Verify build output
-        shell: bash
+        with:
+          python-version: '3.11'
+      - name: Install builder dependencies
+        run: pip install -r requirements.txt
+      - name: Download current OSM extract
+        env:
+          CODE: ${{ matrix.country }}
         run: |
-          set -euo pipefail
-          echo "Build completed for ${{ matrix.code }}"
-          find dist -maxdepth 2 -type f -name '*.abm' -print -exec stat -c '%n %s bytes' {} \;
-          test -n "$(find dist -maxdepth 1 -type f -name '*.abm' -print -quit)"
-
-      - name: Split any archive over the GitHub Release asset cap
-        run: |
-          for abm in dist/*.abm; do
-            [ -e "$abm" ] || continue
-            code=$(basename "$abm" .abm)
-            size=$(stat -c%s "$abm")
-            if [ "$size" -gt 1932735283 ]; then  # ~1.8 GiB
-              python packaging/split_abm.py split "$abm" --output "dist/$code-parts"
-            fi
-          done
-
-      - name: Download previous release archives for delta patches
-        run: |
-          mkdir -p work/previous
-          for abm in dist/*.abm; do
-            [ -e "$abm" ] || continue
-            code=$(basename "$abm" .abm)
-            gh release download maps-v4 --pattern "$code.abm" --dir work/previous || true
-          done
+          python3 - <<'PY'
+          import json, os, urllib.request
+          code = os.environ['CODE']
+          url = json.load(open('countries.json', encoding='utf-8'))[code]['pbf_url']
+          print(f'Downloading {url}')
+          urllib.request.urlretrieve(url, f'{code}.osm.pbf')
+          PY
+      - name: Download previous archive when available
         env:
           GH_TOKEN: ${{ github.token }}
-
-      - name: Create delta patches where a previous release exists
+          CODE: ${{ matrix.country }}
         run: |
-          for abm in dist/*.abm; do
-            [ -e "$abm" ] || continue
-            code=$(basename "$abm" .abm)
-            if [ -f "work/previous/$code.abm" ]; then
-              python packaging/create_patch.py "work/previous/$code.abm" "$abm" --code "$code" --output "dist/$code-patch"
-            else
-              echo "No previous archive for $code; full ABM will be published."
-            fi
-          done
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ matrix.code }}
-          path: dist/
-
-  manifest:
-    needs: build
-    # A cancelled build cannot have a complete release. For failed builds we
-    # still aggregate any country artifacts that finished successfully.
-    if: ${{ always() && needs.build.result != 'cancelled' }}
-    runs-on: ubuntu-latest
-    outputs:
-      has_artifacts: ${{ steps.check.outputs.has_artifacts }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - name: Merge every country's artifact into one dist/
-        uses: actions/download-artifact@v4
-        with:
-          pattern: dist-*
-          path: merged
-          merge-multiple: false
-      - name: Merge and check artifacts
-        id: check
-        shell: bash
+          mkdir -p previous
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "${CODE}.abm" --dir previous --clobber || true
+      - name: Build and validate new archive
+        env:
+          CODE: ${{ matrix.country }}
         run: |
-          set -euo pipefail
           mkdir -p dist
-          # Each dist-<CODE> artifact unpacks to merged/dist-<CODE>/...
-          found=0
-          shopt -s nullglob
-          for d in merged/dist-*; do
-            [ -d "$d" ] || continue
-            for f in "$d"/*.abm "$d"/*-patch* "$d"/*-parts*; do
-              [ -e "$f" ] || continue
-              cp -rn "$f" dist/ 2>/dev/null || true
-            done
-          done
-          if find dist -maxdepth 1 -type f -name '*.abm' -print -quit | grep -q .; then
-            found=1
-          fi
-          echo "has_artifacts=$found" >> "$GITHUB_OUTPUT"
-          echo "Release ABM artifacts present: $found"
-          find dist -maxdepth 2 -type f -printf '%p %s bytes\\n' | sort || true
-
-      - name: Build release manifest.json
-        if: ${{ steps.check.outputs.has_artifacts == '1' }}
-        run: python packaging/build_release_manifest.py dist --release-tag maps-v4 --names countries.json --output dist/manifest.json
-
-      - name: No completed country artifacts
-        if: ${{ steps.check.outputs.has_artifacts != '1' }}
+          python build_abm.py "${CODE}.osm.pbf" --country "$CODE" --output "dist/${CODE}.abm" --verbose
+          python packaging/verify_abm.py "dist/${CODE}.abm"
+      - name: Create incremental patch from previous archive
+        env:
+          CODE: ${{ matrix.country }}
         run: |
-          echo "No completed .abm artifacts were produced; skipping manifest/release publication."
-          exit 0
+          if [ -s "previous/${CODE}.abm" ]; then
+            mkdir -p "dist/${CODE}-patch"
+            python packaging/create_patch.py \
+              "previous/${CODE}.abm" "dist/${CODE}.abm" \
+              --code "$CODE" --output "dist/${CODE}-patch" --chunk-size-mib 4
+            PATCH_SIZE=$(stat -c%s "dist/${CODE}-patch/${CODE}.abmpatch.bin")
+            FULL_SIZE=$(stat -c%s "dist/${CODE}.abm")
+            echo "Patch bytes: $PATCH_SIZE / full bytes: $FULL_SIZE"
+            # A patch larger than the full archive is not useful to clients.
+            # Removing the descriptor makes the app use the normal full download.
+            if [ "$PATCH_SIZE" -ge "$FULL_SIZE" ]; then
+              rm -rf "dist/${CODE}-patch"
+              echo 'Patch is not smaller than full archive; using full download.'
+            fi
+          else
+            echo "No previous ${CODE}.abm; first publication uses full archive."
+          fi
+      - name: Build release manifest
+        env:
+          CODE: ${{ matrix.country }}
+        run: |
+          python packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --output dist/manifest-${CODE}.json
       - uses: actions/upload-artifact@v4
         with:
-          name: abtinmaps-release
+          name: map-${{ matrix.country }}
           path: dist/
+          if-no-files-found: error
 
   publish:
-    needs: manifest
-    if: ${{ needs.manifest.result == 'success' && needs.manifest.outputs.has_artifacts == '1' }}
+    if: github.event_name == 'schedule' || inputs.publish == true
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-        with: {name: abtinmaps-release, path: dist}
-      - name: Publish/update the maps-v4 release
-        uses: softprops/action-gh-release@v2
         with:
-          tag_name: maps-v4
-          files: dist/**
-          fail_on_unmatched_files: true
+          pattern: map-*
+          path: dist
+          merge-multiple: true
+      - name: Assemble one release manifest
+        run: |
+          python3 packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --output dist/manifest.json
+      - name: Publish full archives, manifests and patches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title 'Abtin Maps offline data' --notes 'Incremental offline map updates'
+          find dist -type f \( -name '*.abm' -o -name '*.json' -o -name '*.bin' \) -print0 \
+            | xargs -0 -r gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber
