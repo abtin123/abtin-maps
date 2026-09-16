@@ -204,8 +204,16 @@ def way_geometry(way: Any) -> list[tuple[float, float]]:
 
 def tags_dict(obj: Any) -> dict[str, str]:
     tags = getattr(obj, "tags", obj.get("tags", {}) if isinstance(obj, dict) else {})
-    try: return {str(k): str(v) for k, v in tags.items()}
-    except AttributeError: return {}
+    if isinstance(tags, dict):
+        return {str(k): str(v) for k, v in tags.items()}
+    # osmium's TagList (real .way()/.relation() objects during apply_file)
+    # is a mapping-like C++ wrapper with no .items() method - only
+    # iteration/keys()/__getitem__. dict(tags) is the same conversion
+    # extractors/loader.py already uses successfully for this exact type.
+    try:
+        return {str(k): str(v) for k, v in dict(tags).items()}
+    except (TypeError, ValueError):
+        return {}
 
 
 def entity_id(obj: Any) -> int:
