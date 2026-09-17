@@ -1,230 +1,234 @@
-name: ABM World Weekly Build + Delta
+name: Build and publish incremental map updates
 
+# ۱. چک و اپدیت هفتگی: هر دوشنبه ساعت ۲ بامداد UTC خودکار اجرا می‌شود.
+#    برای هر کشور، دیتای OSM تازه دانلود و با نسخه‌ی منتشرشده‌ی قبلی مقایسه
+#    می‌شود؛ فقط کشورهایی که واقعاً تغییر کرده‌اند از نو ساخته می‌شوند
+#    (ویژگی ۵) و برای بقیه فقط patch افزایشی منتشر می‌شود (ویژگی ۴).
 on:
+  schedule:
+    - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
-      target:
-        description: "all | all/IR | IR"
-        required: true
-        default: "all"
-      force:
-        description: "Force rebuild even when the OSM source has not changed"
+      country:
+        description: 'کد کشور برای ساخت، یا "all" برای همه'
+        required: false
+        default: 'all'
+      exclude:
+        description: 'کدهای کشور که باید از "all" کنار گذاشته شوند (با کاما)، مثلا IR'
+        required: false
+        default: ''
+      force_rebuild:
+        description: 'حتی اگر داده‌ی منبع تغییر نکرده، از نو بساز'
         required: false
         type: boolean
         default: false
-  schedule:
-    - cron: "0 2 * * 1"
+      publish:
+        description: 'نتیجه در release نهایی منتشر شود'
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
 
 env:
-  PYTHONUNBUFFERED: "1"
+  RELEASE_TAG: maps-v4
+  PYTHONUNBUFFERED: '1'
 
 jobs:
-  resolve:
+  # ------------------------------------------------------------------
+  # کشف کشورها: "country=all" + "exclude=IR" => همه به‌جز ایران (ویژگی ۳)
+  # "country=all" بدون exclude => همه‌ی کشورها (ویژگی ۲)
+  # "country=IR" => فقط ایران
+  # ------------------------------------------------------------------
+  discover:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.resolve.outputs.matrix }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - id: resolve
-        shell: bash
+      - id: matrix
         env:
-          TARGET: ${{ github.event.inputs.target || 'all' }}
+          REQUESTED_COUNTRY: ${{ inputs.country || 'all' }}
+          EXCLUDE_COUNTRIES: ${{ inputs.exclude || '' }}
         run: |
-          python3 scripts/resolve_build_targets.py --target "$TARGET" --output build-matrix.json
-          echo "matrix=$(cat build-matrix.json)" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+
+          data = json.load(open('countries.json', encoding='utf-8'))
+          requested = os.environ.get('REQUESTED_COUNTRY', 'all').strip().upper()
+          exclude = {c.strip().upper() for c in os.environ.get('EXCLUDE_COUNTRIES', '').split(',') if c.strip()}
+
+          unknown_exclude = sorted(c for c in exclude if c not in data)
+          if unknown_exclude:
+              raise SystemExit(f'Unknown country code(s) in exclude: {unknown_exclude}')
+
+          if requested in ('', 'ALL'):
+              codes = sorted(c for c in data if c not in exclude)
+          else:
+              if requested not in data:
+                  raise SystemExit(f'Unknown country code: {requested}')
+              codes = [requested]  # exclude is only meaningful together with "all"
+
+          if not codes:
+              raise SystemExit('No countries left to build after applying the exclude list.')
+
+          print('matrix=' + json.dumps({'country': codes}, separators=(',', ':')))
+          PY
 
   build:
-    needs: resolve
+    needs: discover
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 3
-      matrix:
-        include: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: '3.11'
+      - name: Install builder dependencies
+        run: pip install -r requirements.txt
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Check previous release and OSM state
-        id: state
+      - name: Download current OSM extract
         env:
-          GH_TOKEN: ${{ github.token }}
-          FORCE_BUILD: ${{ github.event.inputs.force || 'false' }}
+          CODE: ${{ matrix.country }}
         run: |
-          python3 scripts/check_build_state.py \
-            --country "${{ matrix.country }}" \
-            --region "${{ matrix.region }}" \
-            --output state.json
-          cat state.json
-
-      - name: Download OSM source
-        if: steps.state.outputs.needs_build == 'true'
-        run: |
-          python3 scripts/update_osm.py \
-            --country "${{ matrix.country }}" \
-            --region "${{ matrix.region }}"
-
-      - name: Carry forward unchanged ABM
-        if: steps.state.outputs.needs_build != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PREVIOUS_TAG: ${{ steps.state.outputs.previous_release_tag }}
-        shell: bash
-        run: |
-          mkdir -p release
-          if [ "${{ matrix.region }}" = "__regions__" ]; then
-            while read -r code; do
-              [ -z "$code" ] && continue
-              gh release download "$PREVIOUS_TAG" --pattern "${code}.abm" --dir release --clobber
-            done < <(python3 -c 'import json; from pathlib import Path; c=json.loads(Path("countries.json").read_text())["${{ matrix.country }}"]; r=json.loads(Path(c["regions_config"]).read_text()); print("\n".join(x["code"] for x in r["regions"]))')
-          else
-            gh release download "$PREVIOUS_TAG" --pattern "${{ matrix.country }}.abm" --dir release --clobber
+          URL=$(python3 -c "import json;print(json.load(open('countries.json',encoding='utf-8'))['$CODE']['pbf_url'])")
+          echo "Downloading $URL"
+          curl -L --fail --retry 3 --retry-delay 5 "$URL" -o "${CODE}.osm.pbf"
+          SIZE=$(stat -c%s "${CODE}.osm.pbf")
+          echo "Downloaded ${SIZE} bytes"
+          if [ "$SIZE" -lt 1000000 ]; then
+            echo "::error::Downloaded ${CODE}.osm.pbf is suspiciously small (${SIZE} bytes) - likely an error page, not a real PBF"
+            exit 1
           fi
 
-      - name: Build ABM
-        if: steps.state.outputs.needs_build == 'true'
-        run: |
-          mkdir -p release
-          if [ "${{ matrix.region }}" = "__regions__" ]; then
-            python3 build_abm.py \
-              "source/${{ matrix.country }}.osm.pbf" \
-              --country "${{ matrix.country }}" \
-              --regions "${{ matrix.regions_config }}" \
-              --output release \
-              --verbose
-          else
-            python3 build_abm.py \
-              "source/${{ matrix.country }}.osm.pbf" \
-              --country "${{ matrix.country }}" \
-              --output "release/${{ matrix.country }}.abm" \
-              --verbose
-          fi
-
-      - name: Validate ABM
-        if: steps.state.outputs.needs_build == 'true'
-        run: |
-          python3 validate_abm.py \
-            --country "${{ matrix.country }}" \
-            --region "${{ matrix.region }}"
-
-      - name: Create delta patches
-        if: steps.state.outputs.needs_delta == 'true'
+      - name: Download previous archive and source marker when available
         env:
           GH_TOKEN: ${{ github.token }}
-          PREVIOUS_TAG: ${{ steps.state.outputs.previous_release_tag }}
-        shell: bash
+          CODE: ${{ matrix.country }}
         run: |
-          mkdir -p release
-          if [ "${{ matrix.region }}" = "__regions__" ]; then
-            shopt -s nullglob
-            for target in release/${{ matrix.country }}-*.abm; do
-              code="$(basename "$target" .abm)"
-              mkdir -p "release/${code}-patch"
-              gh release download "$PREVIOUS_TAG" \
-                --pattern "${code}.abm" \
-                --dir "release/${code}-previous" \
-                --clobber || true
-              base="release/${code}-previous/${code}.abm"
-              if [ -f "$base" ]; then
-                python3 packaging/create_patch.py \
-                  "$base" "$target" \
-                  --code "$code" \
-                  --output "release/${code}-patch"
-              fi
-              rm -rf "release/${code}-previous"
-            done
-          else
-            code="${{ matrix.country }}"
-            mkdir -p "release/${code}-patch"
-            gh release download "$PREVIOUS_TAG" \
-              --pattern "${code}.abm" \
-              --dir "release/${code}-previous" \
-              --clobber || true
-            if [ -f "release/${code}-previous/${code}.abm" ]; then
-              python3 packaging/create_patch.py \
-                "release/${code}-previous/${code}.abm" \
-                "release/${code}.abm" \
-                --code "$code" \
-                --output "release/${code}-patch"
+          mkdir -p previous
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "${CODE}.abm" --dir previous --clobber || true
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "${CODE}.source.sha256" --dir previous --clobber || true
+
+      # ------------------------------------------------------------------
+      # ویژگی ۵: اگر ABM قبلی موجود است و هش فایل OSM تازه‌دانلودشده با
+      # هشی که موقع ساخت همان ABM ثبت شده یکی است، یعنی منبع تغییر
+      # نکرده - دوباره از صفر نساز، همون آرشیو قبلی رو دوباره استفاده کن.
+      # ------------------------------------------------------------------
+      - name: Check whether source data changed since last publish
+        env:
+          CODE: ${{ matrix.country }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild || 'false' }}
+        run: |
+          NEW_HASH=$(sha256sum "${CODE}.osm.pbf" | cut -d' ' -f1)
+          echo "New source sha256: $NEW_HASH"
+          echo "SOURCE_SHA256=$NEW_HASH" >> "$GITHUB_ENV"
+
+          if [ "$FORCE_REBUILD" = "true" ]; then
+            echo "force_rebuild is set - building regardless of source hash."
+            echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
+          elif [ -s "previous/${CODE}.abm" ] && [ -f "previous/${CODE}.source.sha256" ]; then
+            OLD_HASH=$(tr -d '[:space:]' < "previous/${CODE}.source.sha256")
+            echo "Previous source sha256: $OLD_HASH"
+            if [ "$NEW_HASH" = "$OLD_HASH" ]; then
+              echo "Source data for $CODE is unchanged since the last publish - skipping rebuild."
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+            else
+              echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
             fi
-            rm -rf "release/${code}-previous"
+          else
+            echo "No usable previous ${CODE}.abm/source hash - building fresh."
+            echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Prepare release metadata
+      - name: Build and validate new archive
+        if: env.SKIP_BUILD != 'true'
+        env:
+          CODE: ${{ matrix.country }}
         run: |
-          mkdir -p release
-          python3 -c 'import json; from pathlib import Path; s=json.loads(Path("state.json").read_text()); Path("release/source-meta-${{ matrix.country }}.json").write_text(json.dumps(s.get("remote", {}), ensure_ascii=False, indent=2)+"\n", encoding="utf-8")'
+          mkdir -p dist
+          python build_abm.py "${CODE}.osm.pbf" --country "$CODE" --output "dist/${CODE}.abm" --verbose
 
-      - name: Upload country build artifact
-        uses: actions/upload-artifact@v4
+      - name: Reuse previous archive (source unchanged)
+        if: env.SKIP_BUILD == 'true'
+        env:
+          CODE: ${{ matrix.country }}
+        run: |
+          mkdir -p dist
+          cp "previous/${CODE}.abm" "dist/${CODE}.abm"
+          echo "Reused previous/${CODE}.abm untouched - no source change detected."
+
+      - name: Create incremental patch from previous archive
+        if: env.SKIP_BUILD != 'true'
+        env:
+          CODE: ${{ matrix.country }}
+        run: |
+          if [ -s "previous/${CODE}.abm" ]; then
+            mkdir -p "dist/${CODE}-patch"
+            python packaging/create_patch.py \
+              "previous/${CODE}.abm" "dist/${CODE}.abm" \
+              --code "$CODE" --output "dist/${CODE}-patch" --chunk-size-mib 4
+            PATCH_SIZE=$(stat -c%s "dist/${CODE}-patch/${CODE}.abmpatch.bin")
+            FULL_SIZE=$(stat -c%s "dist/${CODE}.abm")
+            echo "Patch bytes: $PATCH_SIZE / full bytes: $FULL_SIZE"
+            # A patch larger than the full archive is not useful to clients.
+            # Removing the descriptor makes the app use the normal full download.
+            if [ "$PATCH_SIZE" -ge "$FULL_SIZE" ]; then
+              rm -rf "dist/${CODE}-patch"
+              echo 'Patch is not smaller than full archive; using full download.'
+            fi
+          else
+            echo "No previous ${CODE}.abm; first publication uses full archive."
+          fi
+
+      - name: Record source hash for next run's freshness check
+        env:
+          CODE: ${{ matrix.country }}
+        run: |
+          mkdir -p dist
+          printf '%s' "$SOURCE_SHA256" > "dist/${CODE}.source.sha256"
+
+      - name: Build release manifest
+        env:
+          CODE: ${{ matrix.country }}
+        run: |
+          python packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --output dist/manifest-${CODE}.json
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: abm-${{ matrix.country }}
-          path: release/
+          name: map-${{ matrix.country }}
+          path: dist/
           if-no-files-found: error
-          retention-days: 14
 
   publish:
+    if: github.event_name == 'schedule' || inputs.publish == true
     needs: build
     runs-on: ubuntu-latest
-    if: always() && needs.build.result == 'success'
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download all country artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: release-parts
-          pattern: abm-*
-          merge-multiple: false
-
-      - name: Assemble release tree
-        shell: bash
+          pattern: map-*
+          path: dist
+          merge-multiple: true
+      - name: Assemble one release manifest
         run: |
-          rm -rf release
-          mkdir -p release
-          find release-parts -type f -name '*.abm' -exec cp {} release/ \;
-          find release-parts -type f -path '*/source-meta.json' -exec cp -n {} release/ \; || true
-          find release-parts -type f -name '*.abmpatch.*' -o -name 'patch-descriptor.json' | while read -r f; do
-            d="$(dirname "$f")"
-            code="$(basename "$d" -patch)"
-            mkdir -p "release/${code}-patch"
-            cp "$f" "release/${code}-patch/"
-          done
-
-      - name: Build combined release manifest
-        run: |
-          python3 packaging/build_release_manifest.py \
-            release \
-            --release-tag "abm-weekly-${GITHUB_RUN_ID}" \
-            --names countries.json \
-            --output release/manifest.json
-          test -s release/manifest.json
-
-      - name: Publish GitHub release
+          python3 packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --output dist/manifest.json
+      - name: Publish full archives, manifests, patches and source markers
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          TAG="abm-weekly-${GITHUB_RUN_ID}"
-          gh release create "$TAG" release/*.abm release/manifest.json \
-            --title "ABM Weekly ${GITHUB_RUN_ID}" \
-            --notes "Weekly OpenStreetMap ABM build. ABM archives are tile-free and contain vector, POI/search and routing data." \
-            --latest
-
-          shopt -s nullglob
-          PATCH_ASSETS=(release/*-patch/*)
-          if [ ${#PATCH_ASSETS[@]} -gt 0 ]; then
-            gh release upload "$TAG" "${PATCH_ASSETS[@]}" --clobber
-          fi
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title 'Abtin Maps offline data' --notes 'Incremental offline map updates'
+          find dist -type f \( -name '*.abm' -o -name '*.json' -o -name '*.bin' -o -name '*.sha256' \) -print0 \
+            | xargs -0 -r gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber
