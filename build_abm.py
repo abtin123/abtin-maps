@@ -1,0 +1,258 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse, json, shutil, tempfile
+from pathlib import Path
+from abm_builder.core import setup_logging, write_records, write_spatial_chunks, records_bbox, LOG
+from extractors.loader import load, extract_all, clip_dataset
+from search.create_search_db import create_search_db
+from routing.graph_builder import build_graph, build_graph_from_pbf
+from packaging.create_abm import create_abm, verify_abm
+
+VECTOR_NAMES = ('roads.bin', 'buildings.bin', 'landuse.bin', 'water.bin', 'boundaries.bin', 'places.bin')
+
+
+
+def _merge_graph_db(map_db: Path, graph_db: Path) -> None:
+    """Merge routing tables into map.sqlite; graph.sqlite is build-only staging."""
+    dst = __import__('sqlite3').connect(map_db)
+    try:
+        dst.execute("ATTACH DATABASE ? AS graph_src", (str(graph_db),))
+        dst.executescript("""
+            DROP TABLE IF EXISTS main.nodes;
+            DROP TABLE IF EXISTS main.edges;
+            DROP TABLE IF EXISTS main.turn_restrictions;
+            DROP TABLE IF EXISTS main.node_rtree;
+            CREATE TABLE nodes AS SELECT * FROM graph_src.nodes;
+            CREATE TABLE edges AS SELECT * FROM graph_src.edges;
+            CREATE TABLE turn_restrictions AS SELECT * FROM graph_src.turn_restrictions;
+            CREATE INDEX idx_nodes_lat_lon ON nodes(lat,lon);
+            CREATE INDEX idx_edges_start ON edges(start);
+            CREATE INDEX idx_edges_end ON edges(end);
+            CREATE INDEX idx_edges_class ON edges(road_class);
+            CREATE INDEX idx_restriction_kind ON turn_restrictions(restriction);
+        """)
+        try:
+            dst.execute("CREATE VIRTUAL TABLE node_rtree USING rtree(id,minLat,maxLat,minLon,maxLon)")
+            dst.execute("INSERT INTO node_rtree SELECT * FROM graph_src.node_rtree")
+        except __import__('sqlite3').OperationalError:
+            pass
+        dst.commit()
+        dst.execute("DETACH DATABASE graph_src")
+        dst.execute("VACUUM")
+    finally:
+        dst.close()
+
+
+def _build_one(dataset, country: str, output: Path, source: Path, region: dict | None = None) -> Path:
+    """Run the full extract -> search -> routing -> package pipeline once,
+    against whichever dataset is handed in (the whole country, or one
+    already clipped to a region's bbox). This is the single code path used
+    both for ordinary countries and for each part of a geographically split
+    large country, so region builds get exactly the same validation
+    (bbox, no-tile-files check, required-file check) as a normal build.
+    """
+    work = Path(tempfile.mkdtemp(prefix='abm-build-'))
+    try:
+        LOG.info('[1/5] Extracting vector features for %s', region['code'] if region else country)
+        all_data = extract_all(dataset)
+
+        # --- Size-impact instrumentation -----------------------------------
+        # Reports exactly how much the service/track exclusion (ROAD_CLASSES
+        # in extractors/osm.py) and the unnamed-road search-index skip
+        # (search/map_db.py) are removing on THIS build, so the next real
+        # country build's log states the actual byte impact instead of an
+        # estimate. Cheap: a second pass over ways already held in RAM.
+        from abm_builder.core import tags_dict as _tags_dict
+        from extractors.osm import ROAD_CLASSES as _RENDERED_CLASSES
+        _MINOR = {"service", "track"}
+        _highway_counts: dict[str, int] = {}
+        for w in dataset.ways:
+            hwy = _tags_dict(w).get("highway", "")
+            if hwy:
+                _highway_counts[hwy] = _highway_counts.get(hwy, 0) + 1
+        _excluded_minor = sum(n for hwy, n in _highway_counts.items() if hwy in _MINOR)
+        _kept_rendered = sum(n for hwy, n in _highway_counts.items() if hwy in _RENDERED_CLASSES)
+        _other_highway = sum(n for hwy, n in _highway_counts.items()
+                              if hwy not in _MINOR and hwy not in _RENDERED_CLASSES)
+        _total_highway_ways = _kept_rendered + _excluded_minor + _other_highway
+        if _total_highway_ways:
+            LOG.info(
+                '  [size-impact] highway ways: %d total -> %d rendered, %d excluded as '
+                'service/track (%.1f%% of all highway ways), %d other classes not rendered',
+                _total_highway_ways, _kept_rendered, _excluded_minor,
+                100 * _excluded_minor / _total_highway_ways, _other_highway,
+            )
+        _total_roads = len(all_data['roads.bin'])
+        _named_roads = sum(
+            1 for r in all_data['roads.bin']
+            if any(r.get('tags', {}).get(k) for k in ('name', 'name_fa', 'name_en'))
+        )
+        LOG.info(
+            '  [size-impact] search index: %d/%d rendered roads have a name and will be '
+            'indexed (%d unnamed roads skipped, %.1f%% of rendered roads)',
+            _named_roads, _total_roads, _total_roads - _named_roads,
+            100 * (_total_roads - _named_roads) / _total_roads if _total_roads else 0.0,
+        )
+        LOG.info('  [size-impact] poi: %d features extracted (not chunked into vector/ - '
+                  'goes straight into map.sqlite features table, see kind breakdown below)',
+                  len(all_data['poi']))
+        # --- end instrumentation --------------------------------------------
+
+        vector_index = {"version": 1, "layers": {}, "chunk_size": 768}
+        for name in VECTOR_NAMES:
+            layer = name[:-4]
+            layer_index = write_spatial_chunks(work / 'vector', layer, all_data[name], chunk_size=768)
+            vector_index['layers'][layer] = layer_index
+            layer_bytes = sum((work / c['path']).stat().st_size for c in layer_index['chunks'])
+            LOG.info('  %-11s %7d features  %8.1f MiB (pre-zip)', layer, layer_index['count'], layer_bytes / 2**20)
+        # terrain remains an empty ABM stream when no DEM is supplied.
+        write_records(work / 'vector' / 'terrain.bin', [])
+        (work / 'vector' / 'index.json').write_text(
+            json.dumps(vector_index, ensure_ascii=False, separators=(",", ":")) + '\n',
+            encoding='utf-8',
+        )
+
+        bbox = records_bbox(all_data[name] for name in VECTOR_NAMES)
+        if region is not None:
+            # A region archive's published bbox is the region's own
+            # configured bbox (used for coverage/World-Overview checks),
+            # not just the bounding box of whatever geometry happened to be
+            # clipped into it - those can differ slightly at the edges.
+            bbox = tuple(region['bbox'])
+
+        LOG.info('[2/5] Building POI and FTS5/RTree databases')
+        create_search_db(work / 'map.sqlite', all_data['poi'], all_data['places.bin'], all_data['roads.bin'])
+        LOG.info('  [size-impact] map.sqlite after search index: %.1f MiB',
+                 (work / 'map.sqlite').stat().st_size / 2**20)
+        # Row-count breakdown of the shared `features` table by kind, so
+        # poi's actual share is visible instead of assumed - poi/place/road
+        # rows all land in the same table (and the same search_fts/spatial
+        # indexes), so a bare map.sqlite total doesn't say which kind is
+        # driving it.
+        import sqlite3 as _sqlite3
+        _con = _sqlite3.connect(work / 'map.sqlite')
+        try:
+            for kind, count in _con.execute("SELECT kind, COUNT(*) FROM features GROUP BY kind"):
+                LOG.info('  [size-impact]   features kind=%-6s rows=%d', kind, count)
+        finally:
+            _con.close()
+
+        LOG.info('[3/5] Building routing graph')
+        # PBF routing is streamed directly from the source.  Do not build the
+        # graph from the already-materialized Dataset: that Dataset contains
+        # every way geometry in RAM, and the old graph builder then created a
+        # second full in-memory graph on top of it.  The new PBF path uses a
+        # disk-backed SQLite staging store and streams the final JSON payload.
+        if source.suffix.lower() not in {'.jsonl', '.json'}:
+            graph_stats = build_graph_from_pbf(source, work / 'routing' / 'graph.sqlite', bbox=bbox)
+            # Merge the temporary routing graph into the canonical database.
+            _merge_graph_db(work / 'map.sqlite', work / 'routing' / 'graph.sqlite')
+            (work / 'routing' / 'graph.sqlite').unlink(missing_ok=True)
+        else:
+            graph_stats = build_graph(dataset.ways, dataset.relations, work / 'routing' / 'graph.sqlite')
+            _merge_graph_db(work / 'map.sqlite', work / 'routing' / 'graph.sqlite')
+            (work / 'routing' / 'graph.sqlite').unlink(missing_ok=True)
+        LOG.info('  [size-impact] map.sqlite after routing merge: %.1f MiB',
+                 (work / 'map.sqlite').stat().st_size / 2**20)
+
+        LOG.info('[4/5] Packaging and validating ABM: %s', output)
+        stats = {k: len(v) for k, v in all_data.items() if isinstance(v, list)}
+        stats['routing'] = graph_stats
+        create_abm(work, output, country, source, stats, bbox, region)
+        result = verify_abm(output)
+        LOG.info('[5/5] ABM ready: %s (%d files, %.1f MiB packaged)',
+                 output, result['files'], output.stat().st_size / 2**20)
+        return output
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def _load_regions_config(path: Path) -> dict:
+    cfg = json.loads(path.read_text(encoding='utf-8'))
+    if 'regions' not in cfg or not cfg['regions']:
+        raise SystemExit(f'--regions config {path} has no "regions" list')
+    for r in cfg['regions']:
+        for key in ('code', 'name_fa', 'name_en', 'bbox'):
+            if key not in r:
+                raise SystemExit(f'--regions config {path}: region entry missing "{key}": {r}')
+        if len(r['bbox']) != 4:
+            raise SystemExit(f'--regions config {path}: region {r["code"]} bbox must be [minlon,minlat,maxlon,maxlat]')
+        try:
+            minlon, minlat, maxlon, maxlat = map(float, r['bbox'])
+        except (TypeError, ValueError):
+            raise SystemExit(f'--regions config {path}: region {r["code"]} bbox must contain numbers')
+        if not (-180 <= minlon <= maxlon <= 180 and -90 <= minlat <= maxlat <= 90):
+            raise SystemExit(f'--regions config {path}: invalid bbox for {r["code"]}: {r["bbox"]}')
+    return cfg
+
+
+def main():
+    ap = argparse.ArgumentParser(description='Build a tile-free Abtin Maps ABM country archive')
+    ap.add_argument('input', type=Path, help='OSM .pbf or test .jsonl input')
+    ap.add_argument('-o', '--output', type=Path, required=True,
+                     help='Output .abm file (whole-country build), or output '
+                          'directory when --regions is given')
+    ap.add_argument('--country', required=True, help='ISO-3166 alpha-2 country code')
+    ap.add_argument('--regions', type=Path, default=None,
+                     help='Optional JSON config splitting a large country into real '
+                          'geographic regions (bbox-clipped), instead of one whole-country '
+                          '.abm. See sample/regions/US.json for the format. This is '
+                          'independent from packaging/split_abm.py, which only exists to '
+                          'chop an already-built .abm into byte-sized parts for hosting '
+                          'limits and knows nothing about geography.')
+    ap.add_argument('--verbose', action='store_true')
+    args = ap.parse_args()
+    setup_logging(args.verbose)
+
+    if args.regions is None:
+        LOG.info('Loading OSM input: %s', args.input)
+        data = load(args.input)
+
+        if args.output.suffix.lower() != '.abm':
+            raise SystemExit('Output must end with .abm (use --regions for a multi-file, per-region build)')
+        try:
+            _build_one(data, args.country, args.output, args.input)
+        except Exception:
+            LOG.exception('ABM build failed')
+            raise
+        return
+
+    cfg = _load_regions_config(args.regions)
+    args.output.mkdir(parents=True, exist_ok=True)
+    built = []
+    # For PBF input, load each region directly from the stream.  Never
+    # materialize a whole-country PBF before clipping: large extracts can
+    # otherwise exhaust the GitHub runner's RAM.
+    is_pbf = args.input.suffix.lower() not in {'.jsonl', '.json'}
+    data = None if is_pbf else load(args.input)
+    try:
+        for region_def in cfg['regions']:
+            code = region_def['code']
+            LOG.info('--- Region %s (%s) ---', code, region_def['name_en'])
+            bbox = tuple(float(x) for x in region_def['bbox'])
+            clipped = load(args.input, bbox=bbox) if is_pbf else clip_dataset(data, bbox)
+            if not clipped.ways and not clipped.nodes:
+                LOG.warning('Region %s has no data in %s - skipping (check bbox / input coverage)', code, args.input)
+                continue
+            out_path = args.output / f'{code}.abm'
+            region_meta = {
+                'code': code,
+                'name_fa': region_def['name_fa'],
+                'name_en': region_def['name_en'],
+                'bbox': region_def['bbox'],
+                'country_code': args.country.upper(),
+                'country_name_fa': cfg.get('country_name_fa', ''),
+                'country_name_en': cfg.get('country_name_en', ''),
+            }
+            _build_one(clipped, args.country, out_path, args.input, region=region_meta)
+            built.append(code)
+        LOG.info('Built %d region archives in %s: %s', len(built), args.output, ', '.join(built))
+        if not built:
+            raise SystemExit(f'No region in {args.regions} matched any data in {args.input}')
+    except Exception:
+        LOG.exception('Regional ABM build failed')
+        raise
+
+
+if __name__ == '__main__':
+    main()
