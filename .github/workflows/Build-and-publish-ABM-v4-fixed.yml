@@ -1,107 +1,221 @@
 name: Build and Publish ABM v4
 
 on:
+  schedule:
+    - cron: "0 3 * * 1"   # every Monday 03:00 UTC
   workflow_dispatch:
     inputs:
       country:
-        description: "Country to build, e.g. AM or IR"
+        description: "Codes from countries.json, comma separated (e.g. AM,IR), all, or none (no build, only rebuild manifest from the release)"
         required: true
-        default: "AM"
+        default: "all"
+      publish:
+        description: "Upload to the release (false = build only)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
+  actions: read
+
+concurrency:
+  group: abm-release
+  cancel-in-progress: false
 
 env:
   RELEASE_TAG: maps-v4
+  MAX_ASSET_BYTES: "1932735283"   # ~1.8 GiB, larger archives are split into parts
 
 jobs:
-  build:
+  discover:
     runs-on: ubuntu-latest
-
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # ============================================================
-      # KEEP YOUR EXISTING MAP BUILD STEPS HERE.
-      #
-      # They must produce the newly-built *.abm files in ./dist/
-      # before the "Download existing release assets" step below.
-      # ============================================================
-
-      - name: Download existing release assets
+      - uses: actions/checkout@v4
+      - id: m
         env:
-          GH_TOKEN: ${{ github.token }}
+          WANT: ${{ github.event_name == 'schedule' && (vars.WEEKLY_COUNTRIES || 'all') || inputs.country }}
         run: |
-          rm -rf release-assets
-          mkdir -p release-assets
+          python3 - <<'PY'
+          import json, os
+          countries = json.load(open('countries.json', encoding='utf-8'))
+          want = os.environ['WANT'].replace(' ', '').upper()
+          codes = [] if want == 'NONE' else list(countries) if want in ('', 'ALL') else [c for c in want.split(',') if c]
+          unknown = [c for c in codes if c not in countries]
+          if unknown:
+              raise SystemExit(f'Unknown code(s) not in countries.json: {unknown}')
+          include = [{'code': c, 'pbf_url': countries[c]['pbf_url'],
+                      'regions_config': countries[c].get('regions_config', '')} for c in codes]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('matrix=' + json.dumps({'include': include}) + '\n')
+          print('Building:', ', '.join(codes))
+          PY
 
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release download "$RELEASE_TAG" \
-              --dir release-assets \
-              --pattern '*.abm' \
-              --clobber || true
+  build:
+    needs: discover
+    if: ${{ needs.discover.outputs.matrix != '{"include":[]}' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CODE: ${{ matrix.code }}
+    steps:
+      - uses: actions/checkout@v4
 
-            gh release download "$RELEASE_TAG" \
-              --dir release-assets \
-              --pattern 'manifest.json' \
-              --clobber || true
-          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
 
-          echo "Existing release ABM files:"
-          find release-assets -maxdepth 1 -type f -name '*.abm' \
-            -printf '%f\n' | sort || true
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Build fixed manifest
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+
+      - name: Download OSM extract
+        run: curl -fL --retry 5 --retry-delay 15 -o input.osm.pbf "${{ matrix.pbf_url }}"
+
+      - name: Build ABM
         run: |
-          PREVIOUS_ARGS=()
-          if [ -f release-assets/manifest.json ]; then
-            PREVIOUS_ARGS+=(--previous-manifest release-assets/manifest.json)
-          fi
-
-          CURRENT_ARGS=()
-          if [ -f dist/manifest.json ]; then
-            CURRENT_ARGS+=(--current-manifest dist/manifest.json)
-          fi
-
-          python build_release_manifest.py \
-            "${PREVIOUS_ARGS[@]}" \
-            "${CURRENT_ARGS[@]}" \
-            --asset-dir release-assets \
-            --output dist/manifest.json \
-            --release-tag "$RELEASE_TAG"
-
-      - name: Assemble complete release
-        run: |
-          rm -rf final-assets
-          mkdir -p final-assets
-
-          # Keep every old country.
-          find release-assets -maxdepth 1 -type f -name '*.abm' \
-            -exec cp {} final-assets/ \; || true
-
-          # Replace/add only the countries rebuilt in this run.
-          find dist -maxdepth 1 -type f -name '*.abm' \
-            -exec cp {} final-assets/ \;
-
-          cp dist/manifest.json final-assets/manifest.json
-
-          echo "Final release:"
-          ls -lh final-assets
-
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" \
-              final-assets/*.abm \
-              final-assets/manifest.json \
-              --clobber
+          mkdir -p dist
+          REGIONS="${{ matrix.regions_config }}"
+          if [ -n "$REGIONS" ]; then
+            [ -f "$REGIONS" ] || REGIONS="sample/$REGIONS"
+            python build_abm.py input.osm.pbf --country "$CODE" --regions "$REGIONS" --output dist/
           else
-            gh release create "$RELEASE_TAG" \
-              final-assets/*.abm \
-              final-assets/manifest.json \
-              --title "ABM v4 offline map data" \
-              --notes "ABM v4 offline map data"
+            python build_abm.py input.osm.pbf --country "$CODE" --output "dist/$CODE.abm"
           fi
+          rm -f input.osm.pbf
+          ls -lh dist
+
+      - name: Fetch previous manifest
+        run: |
+          mkdir -p prev
+          gh release download "$RELEASE_TAG" --pattern manifest.json --dir prev --clobber || true
+
+      - name: Patch against previous release and split if needed
+        run: |
+          for abm in dist/*.abm; do
+            python packaging/prepare_release.py "$(basename "$abm" .abm)" \
+              --dist dist --previous-manifest prev/manifest.json \
+              --release-tag "$RELEASE_TAG" --max-asset-bytes "$MAX_ASSET_BYTES"
+          done
+
+      - name: Build manifest fragment and stage files
+        run: |
+          python packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --stage-dir stage -o fragment/manifest.json
+
+      - name: Upload files
+        uses: actions/upload-artifact@v4
+        with:
+          name: abm-${{ matrix.code }}
+          path: stage/
+          compression-level: 0
+          retention-days: 3
+
+      - name: Upload manifest fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: frag-${{ matrix.code }}
+          path: fragment/manifest.json
+          retention-days: 3
+
+  publish:
+    needs: [discover, build]
+    if: ${{ !cancelled() && needs.discover.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DO_PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the release (manifest + asset list)
+        run: |
+          mkdir -p prev
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release download "$RELEASE_TAG" --pattern manifest.json --dir prev --clobber || true
+            gh release view "$RELEASE_TAG" --json assets > assets.json
+          else
+            echo '{"assets":[]}' > assets.json
+          fi
+
+      - name: Download manifest fragments of this run
+        run: |
+          mkdir -p frags
+          gh run download "$GITHUB_RUN_ID" --pattern 'frag-*' --dir frags || echo "No successful builds"
+          find frags -name manifest.json | sort
+
+      - name: Download release ABMs that are missing from / broken in the manifest
+        run: |
+          FRAGS=()
+          while IFS= read -r f; do FRAGS+=(--current-manifest "$f"); done < <(find frags -name manifest.json | sort)
+
+          python3 packaging/build_release_manifest.py --list-incomplete \
+            --previous-manifest prev/manifest.json --release-assets-json assets.json \
+            "${FRAGS[@]}" > incomplete.txt
+          echo "Need inspection: $(tr '\n' ' ' < incomplete.txt)"
+
+          mkdir -p repair
+          while IFS= read -r code; do
+            [ -n "$code" ] && { gh release download "$RELEASE_TAG" --pattern "$code.abm" --dir repair --clobber || echo "::warning::cannot download $code.abm"; }
+          done < incomplete.txt
+          ls -lh repair
+
+      - name: Build final manifest
+        run: |
+          FRAGS=()
+          while IFS= read -r f; do FRAGS+=(--current-manifest "$f"); done < <(find frags -name manifest.json | sort)
+
+          python3 packaging/build_release_manifest.py \
+            --release-tag "$RELEASE_TAG" --names countries.json \
+            --previous-manifest prev/manifest.json \
+            --release-assets-json assets.json --asset-dir repair \
+            "${FRAGS[@]}" \
+            --stale-out stale.txt -o final/manifest.json
+          python3 packaging/build_release_manifest.py --validate final/manifest.json \
+            --previous-manifest prev/manifest.json
+          rm -rf repair
+
+      - name: Publish
+        if: ${{ env.DO_PUBLISH == 'true' }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" --title "ABM v4 offline map data" --notes "ABM v4 offline map data"
+
+          # 1) new/updated data files, one country at a time (keeps runner disk small)
+          for d in $(find frags -name manifest.json -printf '%h\n' | sort); do
+            code=$(basename "$d"); code=${code#frag-}
+            mkdir -p "stage/$code"
+            gh run download "$GITHUB_RUN_ID" --name "abm-$code" --dir "stage/$code"
+            for f in stage/$code/*; do
+              for try in 1 2 3; do gh release upload "$RELEASE_TAG" "$f" --clobber && break || sleep 20; done
+            done
+            rm -rf "stage/$code"
+          done
+
+          # 2) manifest last, so the app never sees entries whose files are not there yet
+          gh release upload "$RELEASE_TAG" final/manifest.json --clobber
+
+          # 3) remove superseded parts / patches of rebuilt countries
+          while IFS= read -r name; do
+            [ -n "$name" ] && gh release delete-asset "$RELEASE_TAG" "$name" --yes || true
+          done < stale.txt
+
+      - name: Summary
+        run: |
+          {
+            echo "### Release manifest"
+            echo '```'
+            python3 -c "import json;m=json.load(open('final/manifest.json'));[print(f\"{c['code']:8} {c['name_en']:22} {c['total_size']:>12} B  {'patch' if c.get('patch') else '-'}\") for c in m['countries']]"
+            echo '```'
+            echo "Published: $DO_PUBLISH"
+          } >> "$GITHUB_STEP_SUMMARY"
