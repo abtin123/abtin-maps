@@ -78,12 +78,76 @@ jobs:
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
 
+      - name: Fetch previous manifest
+        run: |
+          mkdir -p prev
+          gh release download "$RELEASE_TAG" --pattern manifest.json --dir prev --clobber || true
+
       - name: Download OSM extract
         run: curl -fL --retry 5 --retry-delay 15 -o input.osm.pbf "${{ matrix.pbf_url }}"
 
-      - name: Build ABM
+      - name: Check source and skip unchanged rebuilds
+        id: source_check
+        env:
+          PBF_URL: ${{ matrix.pbf_url }}
         run: |
           mkdir -p dist
+          curl -fsSI --retry 5 --retry-delay 5 "$PBF_URL" > source.headers || true
+          python3 - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          code=os.environ['CODE']
+          p=Path('input.osm.pbf')
+          h=hashlib.sha256()
+          with p.open('rb') as f:
+              for b in iter(lambda:f.read(1024*1024), b''): h.update(b)
+          digest=h.hexdigest()
+          size=p.stat().st_size
+          headers={}
+          for line in Path('source.headers').read_text(errors='ignore').splitlines():
+              if ':' in line:
+                  k,v=line.split(':',1); headers[k.strip().lower()]=v.strip()
+          last_modified=headers.get('last-modified','')
+          etag=headers.get('etag','')
+          prev={}
+          mf=Path('prev/manifest.json')
+          if mf.exists():
+              try:
+                  m=json.loads(mf.read_text(encoding='utf-8'))
+                  entries=m.get('countries',[])
+                  prev=next((x for x in entries if x.get('code')==code), None)
+                  if prev is None:
+                      prev=next((x for x in entries if str(x.get('country_code','')).upper()==code), {})
+              except Exception:
+                  prev={}
+          old_source=prev.get('source') or {}
+          old=(old_source.get('pbf_sha256') or '')
+          old_lm=(old_source.get('pbf_last_modified') or '')
+          old_etag=(old_source.get('pbf_etag') or '')
+          # Prefer stable HTTP validators when available. Fall back to the
+          # content hash for providers that do not expose them.
+          if etag and old_etag:
+              changed = etag != old_etag
+          elif last_modified and old_lm:
+              changed = last_modified != old_lm
+          else:
+              changed = digest != old or not old
+          meta={
+              'pbf_sha256': digest,
+              'pbf_size': size,
+              'pbf_last_modified': last_modified,
+              'pbf_etag': etag,
+              'source_checked_at': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
+          }
+          Path(f'dist/{code}.source.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          Path('source_changed').write_text('1' if changed else '0')
+          print(f'{code}: source sha256={digest}; previous={old or "none"}; changed={changed}')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out: out.write(f'changed={str(changed).lower()}\n')
+          PY
+
+      - name: Build ABM
+        if: steps.source_check.outputs.changed == 'true'
+        run: |
           REGIONS="${{ matrix.regions_config }}"
           if [ -n "$REGIONS" ]; then
             [ -f "$REGIONS" ] || REGIONS="sample/$REGIONS"
@@ -91,13 +155,7 @@ jobs:
           else
             python build_abm.py input.osm.pbf --country "$CODE" --output "dist/$CODE.abm"
           fi
-          rm -f input.osm.pbf
           ls -lh dist
-
-      - name: Fetch previous manifest
-        run: |
-          mkdir -p prev
-          gh release download "$RELEASE_TAG" --pattern manifest.json --dir prev --clobber || true
 
       - name: Patch against previous release and split if needed
         run: |
@@ -108,12 +166,17 @@ jobs:
           done
 
       - name: Build manifest fragment and stage files
+        if: steps.source_check.outputs.changed == 'true'
         run: |
           python packaging/build_release_manifest.py dist \
             --release-tag "$RELEASE_TAG" --names countries.json \
             --stage-dir stage -o fragment/manifest.json
 
+      - name: Remove source metadata helper and OSM input
+        run: rm -f dist/*.source.json input.osm.pbf source.headers
+
       - name: Upload files
+        if: steps.source_check.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: abm-${{ matrix.code }}
@@ -122,6 +185,7 @@ jobs:
           retention-days: 3
 
       - name: Upload manifest fragment
+        if: steps.source_check.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: frag-${{ matrix.code }}
