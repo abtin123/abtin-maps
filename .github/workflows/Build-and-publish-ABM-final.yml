@@ -1,0 +1,434 @@
+name: Build and Publish ABM
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      country:
+        description: "Country codes from countries.json (example: IR,AM), all, or none"
+        required: true
+        default: "all"
+      force:
+        description: "Force rebuild even when OSM source and builder inputs are unchanged"
+        type: boolean
+        required: true
+        default: false
+      publish:
+        description: "Publish generated files to the maps-v4 release"
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: abm-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: maps-v4
+  # Keep individual GitHub Release assets below the GitHub large-file limit.
+  MAX_ASSET_BYTES: "1932735283"
+  PYTHONUNBUFFERED: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build country matrix
+        id: matrix
+        env:
+          WANT: ${{ github.event_name == 'schedule' && (vars.WEEKLY_COUNTRIES || 'all') || inputs.country }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+
+          with open("countries.json", encoding="utf-8") as f:
+              countries = json.load(f)
+
+          want = (os.environ.get("WANT") or "all").replace(" ", "").upper()
+          if want == "NONE":
+              codes = []
+          elif want in ("", "ALL"):
+              codes = list(countries)
+          else:
+              codes = [x for x in want.split(",") if x]
+
+          unknown = [x for x in codes if x not in countries]
+          if unknown:
+              raise SystemExit(f"Unknown country code(s): {unknown}")
+
+          include = []
+          for code in codes:
+              item = countries[code]
+              include.append({
+                  "code": code,
+                  "pbf_url": item["pbf_url"],
+                  "regions_config": item.get("regions_config", ""),
+              })
+
+          matrix = {"include": include}
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("matrix=" + json.dumps(matrix, separators=(",", ":")) + "\n")
+
+          print("Countries:", ", ".join(codes) if codes else "none")
+          PY
+
+  build:
+    needs: discover
+    if: ${{ needs.discover.outputs.matrix != '{"include":[]}' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CODE: ${{ matrix.code }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Read previous release metadata
+        run: |
+          rm -rf prev dist stage fragment
+          mkdir -p prev dist
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release download "$RELEASE_TAG" \
+              --pattern manifest.json \
+              --dir prev \
+              --clobber || true
+            gh release view "$RELEASE_TAG" --json assets > prev/assets.json
+          else
+            printf '%s\n' '{"assets":[]}' > prev/assets.json
+          fi
+
+      - name: Check OSM source without downloading the PBF
+        env:
+          FORCE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          args=()
+          if [ "$FORCE_INPUT" = "true" ]; then
+            args+=(--force)
+          fi
+
+          python3 packaging/check_source.py check "$CODE" \
+            --url "${{ matrix.pbf_url }}" \
+            --previous-manifest prev/manifest.json \
+            --assets-json prev/assets.json \
+            --regions-config "${{ matrix.regions_config }}" \
+            "${args[@]}"
+
+          echo "SRC_CHANGED=${SRC_CHANGED:-true}" >> "$GITHUB_ENV"
+          echo "Source changed: ${SRC_CHANGED:-true}"
+
+      - name: Free runner disk space before large downloads
+        if: env.SRC_CHANGED != 'false'
+        run: |
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/powershell \
+            /usr/local/lib/node_modules || true
+          sudo docker system prune -af || true
+          df -h /
+
+      - name: Install Python dependencies
+        if: env.SRC_CHANGED != 'false'
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Download OSM extract
+        if: env.SRC_CHANGED != 'false'
+        run: |
+          set -euo pipefail
+          curl -fL --retry 6 --retry-delay 15 --retry-all-errors \
+            -D dl.headers \
+            -o input.osm.pbf \
+            "${{ matrix.pbf_url }}"
+          ls -lh input.osm.pbf
+
+      - name: Record source metadata
+        if: env.SRC_CHANGED != 'false'
+        run: |
+          python3 packaging/check_source.py finalize "$CODE" \
+            --pbf input.osm.pbf \
+            --headers dl.headers \
+            --previous-manifest prev/manifest.json \
+            --dist dist \
+            --regions-config "${{ matrix.regions_config }}"
+
+      - name: Build ABM
+        if: env.SRC_CHANGED == 'true'
+        run: |
+          set -euo pipefail
+          regions="${{ matrix.regions_config }}"
+
+          if [ -n "$regions" ]; then
+            if [ ! -f "$regions" ] && [ -f "sample/$regions" ]; then
+              regions="sample/$regions"
+            fi
+            python3 build_abm.py input.osm.pbf \
+              --country "$CODE" \
+              --regions "$regions" \
+              --output dist/
+          else
+            python3 build_abm.py input.osm.pbf \
+              --country "$CODE" \
+              --output "dist/$CODE.abm"
+          fi
+
+          find dist -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+
+      - name: Prepare release assets with bounded disk usage
+        if: env.SRC_CHANGED == 'true'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          for abm in dist/*.abm; do
+            code="$(basename "$abm" .abm)"
+            python3 packaging/prepare_release.py "$code" \
+              --dist dist \
+              --previous-manifest prev/manifest.json \
+              --release-tag "$RELEASE_TAG" \
+              --max-asset-bytes "$MAX_ASSET_BYTES"
+          done
+
+          find dist -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+
+      - name: Build manifest fragment and stage files
+        if: env.SRC_CHANGED == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p stage fragment
+          python3 packaging/build_release_manifest.py dist \
+            --release-tag "$RELEASE_TAG" \
+            --names countries.json \
+            --stage-dir stage \
+            -o fragment/manifest.json
+
+      - name: Validate generated ABM assets
+        if: env.SRC_CHANGED == 'true'
+        run: |
+          set -euo pipefail
+          python3 packaging/build_release_manifest.py --validate fragment/manifest.json \
+            --previous-manifest prev/manifest.json
+
+      - name: Remove large temporary source files
+        if: always()
+        run: |
+          rm -f input.osm.pbf dl.headers
+          rm -rf .pytest_cache __pycache__
+          find . -type d -name __pycache__ -prune -exec rm -rf {} + || true
+          df -h /
+
+      - name: Upload ABM artifact
+        if: env.SRC_CHANGED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: abm-${{ matrix.code }}
+          path: stage/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+
+      - name: Upload manifest fragment
+        if: env.SRC_CHANGED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frag-${{ matrix.code }}
+          path: fragment/manifest.json
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: No rebuild summary
+        if: env.SRC_CHANGED == 'false'
+        run: echo "${CODE}: OSM source and builder inputs unchanged; build skipped."
+
+  publish:
+    needs: [discover, build]
+    if: ${{ !cancelled() && needs.discover.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DO_PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Read current release
+        run: |
+          rm -rf prev frags final repair stage
+          mkdir -p prev frags final repair stage
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release download "$RELEASE_TAG" \
+              --pattern manifest.json \
+              --dir prev \
+              --clobber || true
+            gh release view "$RELEASE_TAG" --json assets > assets.json
+          else
+            printf '%s\n' '{"assets":[]}' > assets.json
+          fi
+
+      - name: Download fragments from this run
+        run: |
+          gh run download "$GITHUB_RUN_ID" --pattern 'frag-*' --dir frags || true
+          find frags -type f -name manifest.json -print | sort
+
+      - name: Repair only assets missing from the current release
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r f; do
+            [ -n "$f" ] && args+=(--current-manifest "$f")
+          done < <(find frags -type f -name manifest.json | sort)
+
+          python3 packaging/build_release_manifest.py --list-incomplete \
+            --previous-manifest prev/manifest.json \
+            --release-assets-json assets.json \
+            "${args[@]}" > incomplete.txt
+
+          echo "Incomplete countries:"
+          cat incomplete.txt || true
+
+          while IFS= read -r code; do
+            [ -z "$code" ] && continue
+            gh release download "$RELEASE_TAG" \
+              --pattern "$code.abm" \
+              --dir repair \
+              --clobber || true
+          done < incomplete.txt
+
+      - name: Build and validate final manifest
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r f; do
+            [ -n "$f" ] && args+=(--current-manifest "$f")
+          done < <(find frags -type f -name manifest.json | sort)
+
+          python3 packaging/build_release_manifest.py \
+            --release-tag "$RELEASE_TAG" \
+            --names countries.json \
+            --previous-manifest prev/manifest.json \
+            --release-assets-json assets.json \
+            --asset-dir repair \
+            "${args[@]}" \
+            --stale-out stale.txt \
+            -o final/manifest.json
+
+          python3 packaging/build_release_manifest.py --validate final/manifest.json \
+            --previous-manifest prev/manifest.json
+
+          rm -rf repair
+
+      - name: Publish changed assets
+        if: ${{ env.DO_PUBLISH == 'true' }}
+        run: |
+          set -euo pipefail
+
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" \
+              --title "ABM offline map data" \
+              --notes "AbtinMaps offline map data"
+
+          for d in $(find frags -type f -name manifest.json -printf '%h\n' | sort); do
+            code="$(basename "$d")"
+            code="${code#frag-}"
+            rm -rf "stage/$code"
+            mkdir -p "stage/$code"
+
+            gh run download "$GITHUB_RUN_ID" \
+              --name "abm-$code" \
+              --dir "stage/$code"
+
+            shopt -s nullglob
+            files=(stage/$code/*)
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "No assets for $code; skipping."
+              rm -rf "stage/$code"
+              continue
+            fi
+
+            for f in "${files[@]}"; do
+              uploaded=false
+              for try in 1 2 3; do
+                if gh release upload "$RELEASE_TAG" "$f" --clobber; then
+                  uploaded=true
+                  break
+                fi
+                sleep 20
+              done
+              if [ "$uploaded" != "true" ]; then
+                echo "Failed to upload $f"
+                exit 1
+              fi
+            done
+
+            rm -rf "stage/$code"
+          done
+
+          # Manifest is always uploaded last.
+          gh release upload "$RELEASE_TAG" final/manifest.json --clobber
+
+          # Delete superseded assets only after the new manifest is live.
+          if [ -s stale.txt ]; then
+            while IFS= read -r name; do
+              [ -z "$name" ] && continue
+              gh release delete-asset "$RELEASE_TAG" "$name" --yes || true
+            done < stale.txt
+          fi
+
+      - name: Release summary
+        run: |
+          {
+            echo "### ABM Release"
+            echo
+            echo "Tag: $RELEASE_TAG"
+            echo "Published: $DO_PUBLISH"
+            echo
+            echo '```text'
+            python3 - <<'PY'
+          import json
+          with open("final/manifest.json", encoding="utf-8") as f:
+              m = json.load(f)
+          for c in m.get("countries", []):
+              print(f"{c.get('code',''):8} {c.get('name_en',''):24} {c.get('total_size',0):>14} B")
+          PY
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf prev frags final repair stage assets.json incomplete.txt stale.txt
+          df -h /
