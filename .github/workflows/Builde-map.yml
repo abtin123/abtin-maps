@@ -1,4 +1,4 @@
-name: ABM Map Builder - Build, Validate, Incremental Publish
+name: ABM Map Builder
 
 on:
   schedule:
