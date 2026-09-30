@@ -19,6 +19,10 @@ on:
         type: boolean
         required: true
         default: true
+      regions:
+        description: "Optional province/region codes, e.g. IR-ESF,IR-KER (empty = country/all configured regions)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -54,6 +58,7 @@ jobs:
         id: matrix
         env:
           REQUESTED: ${{ github.event_name == 'schedule' && (vars.WEEKLY_COUNTRIES || 'IR') || inputs.country }}
+          REQUESTED_REGIONS: ${{ github.event_name == 'workflow_dispatch' && inputs.regions || '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -74,8 +79,17 @@ jobs:
               raise SystemExit("countries.json must be a non-empty object")
 
           requested = (os.environ.get("REQUESTED") or "IR").replace(" ", "").upper()
+          requested_regions = [x.strip().upper() for x in os.environ.get("REQUESTED_REGIONS", "").split(",") if x.strip()]
 
-          if requested in ("", "ALL"):
+          if requested_regions:
+              region_countries = list(dict.fromkeys(x.split("-", 1)[0] for x in requested_regions))
+              if requested in ("", "ALL"):
+                  codes = region_countries
+              else:
+                  codes = [x for x in requested.split(",") if x and x in region_countries]
+              if not codes:
+                  raise SystemExit("The selected regions do not belong to the selected country/countries")
+          elif requested in ("", "ALL"):
               codes = list(data.keys())
           else:
               codes = [x for x in requested.split(",") if x]
@@ -94,10 +108,13 @@ jobs:
               if not url:
                   raise SystemExit(f"{code}: pbf_url/url is missing")
 
+              requested_regions = [x.strip().upper() for x in os.environ.get("REQUESTED_REGIONS", "").split(",") if x.strip()]
+              selected_regions = [x for x in requested_regions if x.startswith(code + "-")]
               include.append({
                   "code": code,
                   "pbf_url": url,
-                  "regions_config": item.get("regions_config", "")
+                  "regions_config": item.get("regions_config", ""),
+                  "requested_regions": selected_regions
               })
 
           matrix = {"include": include}
@@ -124,6 +141,7 @@ jobs:
 
     env:
       CODE: ${{ matrix.code }}
+      REQUESTED_REGIONS: ${{ join(matrix.requested_regions, ',') }}
       GH_TOKEN: ${{ github.token }}
 
     steps:
@@ -139,11 +157,11 @@ jobs:
 
           test -f build_abm.py
           test -f requirements.txt
-          test -f packaging/build_release_manifest.py
-          test -f packaging/prepare_release.py
+          test -f release_packaging/build_release_manifest.py
+          test -f release_packaging/prepare_release.py
 
           # Optional helper is allowed, but if it exists it is used.
-          if [ -f packaging/check_source.py ]; then
+          if [ -f release_packaging/check_source.py ]; then
             echo "CHECK_SOURCE=1" >> "$GITHUB_ENV"
           else
             echo "CHECK_SOURCE=0" >> "$GITHUB_ENV"
@@ -234,7 +252,7 @@ jobs:
       - name: Determine whether rebuild is required
         id: source
         env:
-          FORCE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+          FORCE_INPUT: ${{ github.event_name == 'workflow_dispatch' && (inputs.force || inputs.regions != '') || false }}
         shell: bash
         run: |
           set -euo pipefail
@@ -245,7 +263,7 @@ jobs:
             echo "Forced rebuild requested."
           elif [ "$CHECK_SOURCE" = "1" ]; then
             set +e
-            python3 packaging/check_source.py check "$CODE" \
+            python3 release_packaging/check_source.py check "$CODE" \
               --url "${{ matrix.pbf_url }}" \
               --previous-manifest prev/manifest.json \
               --assets-json prev/assets.json \
@@ -287,20 +305,71 @@ jobs:
           test -s source/input.osm.pbf
           ls -lh source/input.osm.pbf
 
+      - name: Fingerprint changed provinces
+        if: steps.source.outputs.changed == 'true' && env.REGIONS_CONFIG != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release_packaging/check_region_source.py \
+            source/input.osm.pbf \
+            --regions-config "$REGIONS_CONFIG" \
+            --output source/region-fingerprints.json
+          test -s source/region-fingerprints.json
+
       - name: Record source metadata
         if: steps.source.outputs.changed == 'true' && env.CHECK_SOURCE == '1'
         shell: bash
         run: |
           set -euo pipefail
-          python3 packaging/check_source.py finalize "$CODE" \
+          python3 release_packaging/check_source.py finalize "$CODE" \
             --pbf source/input.osm.pbf \
             --headers source/headers.txt \
             --previous-manifest prev/manifest.json \
             --dist dist \
-            --regions-config "$REGIONS_CONFIG"
+            --regions-config "$REGIONS_CONFIG" \
+            $(if [ -f source/region-fingerprints.json ]; then echo --region-fingerprints source/region-fingerprints.json; fi)
+
+      - name: Select changed provinces
+        id: regions
+        if: steps.source.outputs.changed == 'true' && env.REGIONS_CONFIG != ''
+        shell: bash
+        env:
+          FORCE_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          from release_packaging.check_source import builder_hash
+          cfg = json.loads(Path(os.environ['REGIONS_CONFIG']).read_text(encoding='utf-8'))
+          prev = {}
+          pp = Path('prev/manifest.json')
+          if pp.exists():
+              data=json.loads(pp.read_text(encoding='utf-8'))
+              prev={str(x.get('code')): x for x in data.get('countries',[]) if isinstance(x,dict)}
+          fps=json.loads(Path('source/region-fingerprints.json').read_text(encoding='utf-8'))
+          current_builder=builder_hash(os.environ['REGIONS_CONFIG'])
+          force=os.environ.get('FORCE_INPUT')=='true'
+          requested={x.strip().upper() for x in os.environ.get('REQUESTED_REGIONS','').split(',') if x.strip()}
+          changed=[]
+          for r in cfg.get('regions',[]):
+              code=str(r['code']).strip().upper()
+              old=(prev.get(code,{}).get('source') or {})
+              same=(old.get('region_pbf_sha256') == (fps.get(code) or {}).get('sha256')
+                    and old.get('builder_hash') == current_builder
+                    and prev.get(code,{}).get('sha256'))
+              if requested:
+                  if code in requested: changed.append(code)
+              elif force or not same:
+                  changed.append(code)
+          print('Changed regions:', ','.join(changed) if changed else '(none)')
+          out=Path(os.environ['GITHUB_OUTPUT'])
+          out.write_text(f"codes={','.join(changed)}\nneeded={'true' if changed else 'false'}\n", encoding='utf-8')
+          PY
+          echo "REGION_CODES=${{ steps.regions.outputs.codes }}" >> "$GITHUB_ENV"
 
       - name: Build ABM
-        if: steps.source.outputs.changed == 'true'
+        if: steps.source.outputs.changed == 'true' && (env.REGIONS_CONFIG == '' || steps.regions.outputs.needed == 'true')
         shell: bash
         run: |
           set -euo pipefail
@@ -318,7 +387,8 @@ jobs:
               source/input.osm.pbf \
               --country "$CODE" \
               --regions "$regions" \
-              --output dist/
+              --output dist/ \
+              $([ -z "${REGION_CODES:-}" ] || echo --only-regions "$REGION_CODES")
           else
             python3 build_abm.py \
               source/input.osm.pbf \
@@ -354,7 +424,7 @@ jobs:
           for abm in dist/*.abm; do
             code="$(basename "$abm" .abm)"
 
-            python3 packaging/prepare_release.py "$code" \
+            python3 release_packaging/prepare_release.py "$code" \
               --dist dist \
               --previous-manifest prev/manifest.json \
               --release-tag "$RELEASE_TAG" \
@@ -390,7 +460,7 @@ jobs:
 
           mkdir -p stage fragment
 
-          python3 packaging/build_release_manifest.py dist \
+          python3 release_packaging/build_release_manifest.py dist \
             --release-tag "$RELEASE_TAG" \
             --names countries.json \
             --stage-dir stage \
@@ -405,7 +475,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          python3 packaging/build_release_manifest.py \
+          python3 release_packaging/build_release_manifest.py \
             --validate fragment/manifest.json \
             --previous-manifest prev/manifest.json
 
@@ -522,7 +592,7 @@ jobs:
       - name: Verify release helper files
         run: |
           set -euo pipefail
-          test -f packaging/build_release_manifest.py
+          test -f release_packaging/build_release_manifest.py
           test -f countries.json
 
       - name: Prepare publish workspace
@@ -579,7 +649,7 @@ jobs:
             [ -n "$f" ] && args+=(--current-manifest "$f")
           done < <(find frags -type f -name manifest.json | sort)
 
-          python3 packaging/build_release_manifest.py \
+          python3 release_packaging/build_release_manifest.py \
             --release-tag "$RELEASE_TAG" \
             --names countries.json \
             --previous-manifest prev/manifest.json \
@@ -596,7 +666,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          python3 packaging/build_release_manifest.py \
+          python3 release_packaging/build_release_manifest.py \
             --validate final/manifest.json \
             --previous-manifest prev/manifest.json
 
