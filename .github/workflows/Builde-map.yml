@@ -292,15 +292,35 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl -fL \
-            --retry 8 \
-            --retry-delay 15 \
-            --retry-all-errors \
-            --connect-timeout 30 \
-            --max-time 0 \
-            -D source/headers.txt \
-            -o source/input.osm.pbf \
-            "${{ matrix.pbf_url }}"
+          URL="${{ matrix.pbf_url }}"
+          UA="abtin-maps-builder (+github-actions)"
+
+          download() {
+            curl -fL \
+              --max-redirs 10 \
+              --retry 3 \
+              --retry-delay 20 \
+              --connect-timeout 30 \
+              --max-time 0 \
+              -A "$UA" \
+              -D source/headers.txt \
+              -o source/input.osm.pbf \
+              "$1"
+          }
+
+          if ! download "$URL"; then
+            echo "::warning::Direct download failed; redirect chain follows"
+            curl -sI --max-redirs 10 -L -A "$UA" "$URL" | grep -iE '^(HTTP|location|server|retry-after)' || true
+            # Resolve the dated file name once, then fetch it directly.
+            DATED="$(curl -s -o /dev/null -w '%{redirect_url}' -A "$UA" "$URL" || true)"
+            if [ -n "$DATED" ] && [ "$DATED" != "$URL" ]; then
+              echo "Retrying with resolved URL: $DATED"
+              download "$DATED"
+            else
+              echo "::error::Could not download $URL (see redirect chain above)"
+              exit 1
+            fi
+          fi
 
           test -s source/input.osm.pbf
           ls -lh source/input.osm.pbf
