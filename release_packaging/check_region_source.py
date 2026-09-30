@@ -51,14 +51,16 @@ def region_fingerprints(pbf: Path, config: Path) -> dict[str, dict]:
             and by0 <= maxlat
         )
 
-    def add(code: str, kind: str, obj) -> None:
+    def snapshot(kind: str, obj) -> list:
+        # pyosmium objects are only valid inside the handler callback, so
+        # copy everything needed for hashing while the object is alive.
         tags = sorted((str(k), str(v)) for k, v in obj.tags)
-        payload = [
-            kind,
-            str(obj.id),
-            str(getattr(obj, "version", "")),
-            tags,
-        ]
+        return [kind, str(obj.id), str(getattr(obj, "version", "")), tags]
+
+    def add(code: str, kind: str, obj) -> None:
+        add_payload(code, snapshot(kind, obj))
+
+    def add_payload(code: str, payload: list) -> None:
         hashes[code].update(
             json.dumps(
                 payload, ensure_ascii=False, separators=(",", ":")
@@ -70,7 +72,7 @@ def region_fingerprints(pbf: Path, config: Path) -> dict[str, dict]:
     # Relations can appear before their member ways in a PBF.  Keep their
     # compact payloads until all ways have been seen, then associate them with
     # regions from the member-way IDs.
-    relations: list[tuple[object, set[int]]] = []
+    relations: list[tuple[list, set[int]]] = []
 
     class Handler(osmium.SimpleHandler):
         def node(self, n):
@@ -110,7 +112,7 @@ def region_fingerprints(pbf: Path, config: Path) -> dict[str, dict]:
                 if str(m.type) == "w"
             }
             if members:
-                relations.append((rel, members))
+                relations.append((snapshot("relation", rel), members))
 
     print(
         f"Fingerprinting {pbf} in one PBF pass for "
@@ -122,10 +124,10 @@ def region_fingerprints(pbf: Path, config: Path) -> dict[str, dict]:
 
     # Preserve the intended relation contribution without requiring relation
     # ordering in the source PBF.
-    for rel, members in relations:
+    for payload, members in relations:
         for code, _bbox in region_defs:
             if members & way_ids[code]:
-                add(code, "relation", rel)
+                add_payload(code, payload)
 
     return {
         code: {
