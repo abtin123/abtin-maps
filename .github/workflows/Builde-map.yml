@@ -330,11 +330,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "Fingerprinting regional source in a single PBF pass..."
           python3 release_packaging/check_region_source.py \
             source/input.osm.pbf \
             --regions-config "$REGIONS_CONFIG" \
             --output source/region-fingerprints.json
           test -s source/region-fingerprints.json
+          echo "Regional fingerprints created:"
+          cat source/region-fingerprints.json
 
       - name: Record source metadata
         if: steps.source.outputs.changed == 'true' && env.CHECK_SOURCE == '1'
