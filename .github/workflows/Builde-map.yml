@@ -499,8 +499,7 @@ jobs:
           set -euo pipefail
 
           python3 release_packaging/build_release_manifest.py \
-            --validate fragment/manifest.json \
-            --previous-manifest prev/manifest.json
+            --validate fragment/manifest.json
 
           python3 - <<'PY'
           import json
