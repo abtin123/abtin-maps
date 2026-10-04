@@ -52,6 +52,8 @@ AREA_CLASSES = {
 LANDUSE = {v for (k, v) in AREA_CLASSES if k == "landuse"}
 POI_KEYS = {"hospital", "pharmacy", "fuel", "restaurant", "cafe", "bank", "school", "university", "police", "parking", "toilets", "supermarket", "mall", "convenience", "hotel", "attraction", "airport", "railway_station", "bus_station"}
 
+SHOP_POI_KEYS = {"supermarket", "mall", "convenience"}
+
 # Road-safety point categories: these live on the `highway`/`traffic_calming`
 # keys (not `amenity`/`shop`/...), so pois() checks them separately below.
 # Category names are written verbatim into map.sqlite's `categories` table and
@@ -178,7 +180,14 @@ def pois(nodes: Iterable, ways: Iterable = ()):
     for obj in list(nodes) + list(ways):
         t = tags_dict(obj); value = ""
         for key in ("amenity", "shop", "tourism", "aeroway", "railway", "public_transport"):
-            if t.get(key) in POI_KEYS: value = t[key]; break
+            v = t.get(key)
+            if v not in POI_KEYS: continue
+            # shop=fuel is a *shop* selling heating/cooking fuel (charcoal,
+            # firewood, kerosene, bottled gas), NOT a vehicle fuel station
+            # (amenity=fuel). Only real shop values may come from the shop key,
+            # otherwise charcoal shops get the fuel-station category/icon.
+            if key == "shop" and v not in SHOP_POI_KEYS: continue
+            value = v; break
         if not value and t.get("highway") in ROAD_SAFETY_HIGHWAY_KEYS:
             # Speed cameras and traffic signals are tagged as highway=*, not
             # amenity=*, so they never matched the loop above. Offline
