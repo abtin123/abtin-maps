@@ -6,6 +6,10 @@ from abm_builder.core import name_triple, norm_fa
 
 KIND_POI, KIND_PLACE, KIND_ROAD = 0, 1, 2
 SCHEMA_VERSION = 7
+# Importance of a geographic place type (lower = more important). A typed city
+# name must win over the nearest *street* that merely contains that word.
+PLACE_RANK = {c: i for i, c in enumerate((
+    "city", "town", "village", "suburb", "hamlet", "neighbourhood"))}
 ROAD_RANK = {c: i for i, c in enumerate((
     "motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential",
     "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link",
@@ -197,37 +201,56 @@ def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * r * math.asin(math.sqrt(min(1.0, a)))
 
 
+def _row_sql(where_extra: str = "") -> str:
+    return (
+        "SELECT f.id, f.kind, n.name, n.name_fa, n.name_en, c.name AS category, "
+        "(s.min_lat+s.max_lat)/2 AS lat, (s.min_lon+s.max_lon)/2 AS lon, f.opening_hours, "
+        "bm25(search_fts) AS rank FROM search_fts "
+        "JOIN names n ON n.id = search_fts.rowid JOIN features f ON f.name_id = n.id "
+        "JOIN categories c ON c.id = f.category_id JOIN spatial s ON s.id = f.id "
+        "WHERE search_fts MATCH ? " + where_extra
+    )
+
+
 def search(path: Path, query: str, limit=20, latitude: float | None = None,
            longitude: float | None = None):
     """Search one regional DB.
 
-    If GPS coordinates are supplied, proximity is the primary ordering key.
-    Text relevance (FTS5 bm25) is used only as a secondary key. Without GPS,
-    the historical relevance ordering is preserved.
+    Geographic places (city/town/village/...) whose name matches the query are
+    returned FIRST, ordered by place importance and then by distance. Only
+    after them come streets/POIs: with GPS coordinates those are ordered by
+    proximity, otherwise by FTS5 bm25 relevance.
+
+    Places are queried separately so that a typed city name ("تهران") is never
+    pushed out of the candidate window by thousands of nearby streets that
+    merely contain the same word.
     """
     q = norm_fa(query).replace('"', ' ').strip()
     if not q or limit <= 0:
         return []
+    has_gps = latitude is not None and longitude is not None
     con = sqlite3.connect(path); con.row_factory = sqlite3.Row
     try:
         # Fetch a wider candidate set before applying distance ordering. This is
         # important because the closest match may have a weaker FTS rank than
         # the first `limit` text matches.
-        fetch_limit = max(limit * 20, 100) if latitude is not None and longitude is not None else limit
-        rows = con.execute(
-            "SELECT f.id, f.kind, n.name, n.name_fa, n.name_en, c.name AS category, "
-            "(s.min_lat+s.max_lat)/2 AS lat, (s.min_lon+s.max_lon)/2 AS lon, f.opening_hours, "
-            "bm25(search_fts) AS rank FROM search_fts "
-            "JOIN names n ON n.id = search_fts.rowid JOIN features f ON f.name_id = n.id "
-            "JOIN categories c ON c.id = f.category_id JOIN spatial s ON s.id = f.id "
-            "WHERE search_fts MATCH ? ORDER BY rank LIMIT ?", (q + '*', fetch_limit)
-        ).fetchall()
-        result = [dict(r) for r in rows]
-        if latitude is not None and longitude is not None:
-            for item in result:
+        fetch_limit = max(limit * 20, 100) if has_gps else limit
+        match = q + '*'
+        place_rows = [dict(r) for r in con.execute(
+            _row_sql("AND f.kind = ? ORDER BY rank LIMIT ?"),
+            (match, KIND_PLACE, max(limit * 5, 30)))]
+        rows = [dict(r) for r in con.execute(
+            _row_sql("ORDER BY rank LIMIT ?"), (match, fetch_limit))]
+        if has_gps:
+            for item in place_rows + rows:
                 item['distance_m'] = _distance_m(latitude, longitude, item['lat'], item['lon'])
-            result.sort(key=lambda x: (x['distance_m'], x['rank']))
-        return result[:limit]
+            rows.sort(key=lambda x: (x['distance_m'], x['rank']))
+        place_rows.sort(key=lambda x: (
+            0 if norm_fa(x['name_fa'] or x['name']) == q or norm_fa(x['name']) == q else 1,
+            PLACE_RANK.get(x['category'], 99),
+            x.get('distance_m', 0.0), x['rank']))
+        seen = {r['id'] for r in place_rows}
+        return (place_rows + [r for r in rows if r['id'] not in seen])[:limit]
     finally:
         con.close()
 
@@ -249,8 +272,12 @@ def search_many(paths, query: str, limit=20, latitude: float | None = None,
             item = dict(item)
             item['database'] = str(path)
             merged.append(item)
-    if latitude is not None and longitude is not None:
-        merged.sort(key=lambda x: (x['distance_m'], x['rank']))
-    else:
-        merged.sort(key=lambda x: x['rank'])
+    def key(x):
+        is_place = 0 if x.get('kind') == KIND_PLACE else 1
+        if latitude is not None and longitude is not None:
+            if is_place == 0:
+                return (0, PLACE_RANK.get(x['category'], 99), x['distance_m'], x['rank'])
+            return (1, 0, x['distance_m'], x['rank'])
+        return (is_place, PLACE_RANK.get(x['category'], 99) if is_place == 0 else 0, 0.0, x['rank'])
+    merged.sort(key=key)
     return merged[:limit]
