@@ -71,6 +71,21 @@ def main():
             'geometry': feature.get('geometry'),
             'routing_overlap_degrees': 0.25,
         })
+    # Natural Earth sometimes gives two Admin-1 records the same ISO-3166-2
+    # code (or a record shares a code with a hashed ID). build_abm.py rejects
+    # duplicate codes, which aborts the whole country. Disambiguate every
+    # colliding record with a deterministic name hash so IDs stay stable and do
+    # not depend on feature order.
+    counts={}
+    for r in regions:
+        counts[r['code']]=counts.get(r['code'],0)+1
+    for r in regions:
+        if counts[r['code']]>1:
+            tag=hashlib.sha1(f"{code}:{r['name_en'].casefold()}".encode('utf-8')).hexdigest()[:4].upper()
+            print(f"{code}: duplicate Admin-1 code {r['code']} for {r['name_en']!r}; using {r['code']}_{tag}")
+            r['code']=f"{r['code']}_{tag}"
+    if len({r['code'] for r in regions})!=len(regions):
+        raise SystemExit(f'{code}: could not make Admin-1 region codes unique')
     regions.sort(key=lambda r:r['name_en'].casefold())
     if not regions:
         out.unlink(missing_ok=True)
